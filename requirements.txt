@@ -1,0 +1,21 @@
+# VUELTA A LA ESTABILIDAD (Versiones 0.2.x)
+langchain<0.3.0
+langchain-community<0.3.0
+langchain-core<0.3.0
+langchain-text-splitters<0.3.0
+langchain-google-genai
+langchain-huggingface==0.0.3
+
+# RESTO DE HERRAMIENTAS
+google-generativeai
+chromadb
+sentence-transformers
+rank_bm25
+pypdf
+python-dotenv
+pandas
+numpy
+matplotlib
+seaborn
+jupyter
+ipykernel

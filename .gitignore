@@ -1,0 +1,32 @@
+# --- 1. SEGURIDAD (LO MÁS IMPORTANTE) ---
+.env
+.env.local
+key.env
+
+# --- 2. BASURA DE PYTHON ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- 3. DATOS PESADOS O GENERADOS ---
+# La base de datos vectorial se regenera con el código, no se sube (pesa mucho)
+/data/chroma_db/
+
+# El PDF del paper (Opcional: Si tiene copyright, mejor no subirlo)
+# /data/*.pdf
+
+# --- 4. JUPYTER NOTEBOOKS ---
+# Ignorar carpetas de autoguardado
+.ipynb_checkpoints/
+
+# --- 5. ARCHIVOS DE SISTEMA / IDE ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- 6. RESULTADOS TEMPORALES ---
+# Solo queremos subir el CSV final limpio, no los backups sucios
+/results/backup_resultados.csv
+/results/resultados_parciales.csv

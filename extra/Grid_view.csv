@@ -1,0 +1,12 @@
+﻿Strategy,Context Preservation,Implementation Complexity,Computational Cost,Best For
+Fixed-Length Chunking,Low,Low,Low,"Simple documents, speed-critical applications"
+Sentence-Based Chunking,Medium,Low,Low,"Short queries, conversational AI"
+Paragraph-Based Chunking,Medium-High,Low,Medium,Structured documents
+Sliding Window Chunking,High,Medium,High,Context-critical texts
+Semantic Chunking,High,High,High,Technical or academic documents
+Recursive Chunking,High,Medium,Medium,"Large, hierarchical documents"
+Context-Enriched Chunking,Very High,High,High,Long documents requiring coherence
+Modality-Specific Chunking,Variable,High,Variable,Mixed-media documents
+Agentic Chunking,Very High,Very High,Very High,Complex documents needing deep understanding
+Subdocument Chunking,High,High,High,Large document collections
+Hybrid Chunking,Variable,Very High,Variable,Versatile systems

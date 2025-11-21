@@ -1,0 +1,5 @@
+method,Accuracy,Avg_Time,Total_Questions
+baseline,100.0%,1.04s,3
+bm25,33.3%,8.54s,3
+dense,33.3%,3.08s,3
+hybrid,66.7%,3.11s,3
