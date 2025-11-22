@@ -40,8 +40,8 @@ def run_experiment():
     # --- CONFIGURACIÓN DE LA PRUEBA ---
     # Para probar rápido, usa solo las 2 primeras. 
     # Para el final, comenta esta línea:
-    # questions_to_run = questions[:3]  
-    questions_to_run = questions # <-- Descomenta esta para correr las 50 preguntas
+    questions_to_run = questions[:3]  
+    # questions_to_run = questions # <-- Descomenta esta para correr las 50 preguntas
     
     # Métodos a comparar [cite: 32]
     # Puedes añadir "dense" y "bm25" a la lista si quieres comparar los 4
