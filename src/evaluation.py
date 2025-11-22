@@ -8,7 +8,7 @@ RESULTS_PATH = "./results/resultados_finales.csv"
 OUTPUT_DIR = "./results/plots"
 
 
-def eval(df : pd.DataFrame, ff  = "./results/resultados_finales.csv", pf = "./results/resultados_parciales.csv"):
+def evaluate_results(df : pd.DataFrame, ff  = "./results/resultados_finales.csv", pf = "./results/resultados_parciales.csv"):
     df.to_csv(ff, index=False)
 
     print("\n" + "="*30)
