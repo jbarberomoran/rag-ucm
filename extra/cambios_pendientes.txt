@@ -1,13 +1,14 @@
 HECHO - solucionar problema inicializacion base datos
-solucionar tiempo bm25
-verificar implementacion de la comprobacion con ia
+HECHO - refactorizar el codigo
+HECHO? - solucionar tiempo bm25
+CAMBIAR - verificar implementacion de la comprobacion con ia
 añadir chunk esperado y chunk usado
 comparativa tamaño de chunks
 comparativa tipo de chunking (recursivo vs semantico) 
 jupyter notebook
-guardar todos los datos
 
 BONUS:
-correr varias veces y estadistica sobre los datos
+Mitad hecho, falta comprobar la correccion de codigo y alguna rama de if
+     que creo que nunca se llega a ejecutar -guardar todos los datos - correr varias veces y estadistica sobre los datos
 mas metricas y tablas
 Clear insights on when/why RAG helps, how it differs from BM25, and when to use each one -- supported by evidence
