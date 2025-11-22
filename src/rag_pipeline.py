@@ -2,6 +2,9 @@ from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from src.retrieval import get_retriever
 
+# Modelo usado
+MODEL_NAME = "models/gemma-3-27b-it" # O "gemini-2.5-flash" si quieres asegurar
+
 # PLANTILLA DEL PROMPT [cite: 38]
 # Instruimos al modelo para que actúe como experto y cite fuentes.
 rag_template = """
@@ -50,7 +53,7 @@ def query_rag(question, options, method, api_key):
     # 2. Configurar el LLM (Gemini)
     # Usamos temperature=0 para resultados reproducibles [cite: 47]
     llm = ChatGoogleGenerativeAI(
-        model="models/gemma-3-27b-it", 
+        model=MODEL_NAME, 
         google_api_key=api_key,
         temperature=0
     )
@@ -68,5 +71,65 @@ def query_rag(question, options, method, api_key):
     # 4. Enviar a Google y obtener respuesta
     response = llm.invoke(formatted_prompt)
     
-    # Limpiamos la respuesta (quitamos espacios extra)
-    return response.content.strip()
+    # Devolvemos la respuesta Y TAMBIÉN los documentos usados (si los hubo)
+    # Si es baseline, relevant_docs no existe, devolvemos lista vacía
+    docs_used = relevant_docs if method != "baseline" else []
+    
+    return response.content.strip(), docs_used
+
+# --- EL JUEZ (LLM-as-a-Judge) ---
+judge_template = """
+You are an impartial grader evaluating a RAG system.
+Your job is to determine if the provided CONTEXT contains sufficient information to answer the QUESTION correctly.
+
+QUESTION: {question}
+CORRECT ANSWER: {correct_answer}
+RETRIEVED CONTEXT:
+{context}
+
+INSTRUCTIONS:
+1. Read the context and the question.
+2. Determine if the context justifies the correct answer.
+3. If the context mentions the answer explicitly or implicitly, return "YES".
+4. If the context is irrelevant or misses the key fact, return "NO".
+5. Response format: Just one word ("YES" or "NO").
+"""
+
+judge_prompt = PromptTemplate(
+    template=judge_template,
+    input_variables=["question", "correct_answer", "context"]
+)
+
+def verify_context_with_llm(question, correct_answer, docs, api_key):
+    """
+    Consulta al LLM si los documentos recuperados realmente justifican la respuesta.
+    Devuelve True si el contexto es válido, False si fue suerte.
+    """
+    # Si no hay documentos (caso Baseline), obviamente no está justificado en el texto
+    if not docs:
+        return False
+
+    # Unimos el texto de los chunks
+    context_text = "\n\n".join([doc.page_content for doc in docs])
+
+    # Configuramos un modelo 'Flash' barato para juzgar rápido
+    llm_judge = ChatGoogleGenerativeAI(
+        model=MODEL_NAME, # Usa el mismo modelo que tengas disponible
+        google_api_key=api_key,
+        temperature=0
+    )
+
+    # Preguntamos al juez
+    formatted_prompt = judge_prompt.format(
+        question=question,
+        correct_answer=correct_answer,
+        context=context_text
+    )
+    
+    try:
+        verdict = llm_judge.invoke(formatted_prompt).content.strip().upper()
+        # Limpiamos por si responde "YES." o "Answer: YES"
+        return "YES" in verdict
+    except Exception as e:
+        print(f"   [Juez] Error: {e}")
+        return False
