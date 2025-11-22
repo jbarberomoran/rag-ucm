@@ -23,6 +23,9 @@ def get_retriever(method="hybrid", k=4):
     """
     # 1. Cargar Embeddings (El traductor texto -> números)
     embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+
+    # Filtramos por el texto exacto del error justo antes de llamar a Chroma
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
     
     # 2. Conectar con la Base de Datos Vectorial (Chroma)
     db = Chroma(persist_directory=CHROMA_PATH, embedding_function=embeddings)
