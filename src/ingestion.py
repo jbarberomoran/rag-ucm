@@ -14,7 +14,26 @@ CHROMA_PATH = "./data/chroma_db"
 CHUNK_SIZE = 1000  
 CHUNK_OVERLAP = 200 
 
+# force_build - flag para reiniciar la bd
+def db_setup(force_rebuild=False):
+    """Crea o reutiliza la base vectorial según el estado actual."""
+
+    # Caso 1 — BD ya existe
+    if os.path.exists(CHROMA_PATH):
+        if force_rebuild:
+            print("🔄 Reconstruyendo la base vectorial (force_rebuild=True)...")
+            shutil.rmtree(CHROMA_PATH)
+        else:
+            print("📦 Base vectorial ya existe → Reutilizando.")
+            return True 
+        
+    # Caso 2 — BD no existe o la estamos regenerando
+    ingest_data()
+
 def ingest_data():
+
+    
+    # Caso 2 — BD no existe o la estamos regenerando
     print("🚀 INICIANDO PROCESO DE INGESTA DE DATOS...")
 
     # 1. Verificar que el PDF existe
