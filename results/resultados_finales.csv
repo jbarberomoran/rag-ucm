@@ -1,13 +1,17 @@
-question_id,method,correct,predicted,ground_truth,response_time,raw_output
-1,baseline,True,C,C,1.02,C
-1,bm25,False,D,C,30.14,D
-1,dense,True,C,C,2.99,C
-1,hybrid,True,C,C,3.17,C
-2,baseline,True,C,C,0.88,C
-2,bm25,False,A,C,3.16,A
-2,dense,False,A,C,3.14,A)
-2,hybrid,False,A,C,3.16,A
-3,baseline,True,B,B,0.68,B
-3,bm25,True,B,B,2.9,B
-3,dense,False,D,B,3.08,D
-3,hybrid,True,B,B,3.29,B
+question_id,method,correct,verified_rag,status_label,predicted,ground_truth,response_time
+1,baseline,True,False,🧠 MEMORIA,C,C,0.66
+1,bm25,False,False,❌ FALLO,D,C,14.24
+1,dense,True,True,✅ RAG VERIFICADO,C,C,3.65
+1,hybrid,True,True,✅ RAG VERIFICADO,C,C,3.58
+2,baseline,True,False,🧠 MEMORIA,C,C,0.64
+2,bm25,False,False,❌ FALLO,A,C,2.78
+2,dense,False,False,❌ FALLO,A,C,2.77
+2,hybrid,False,False,❌ FALLO,A,C,2.77
+3,baseline,True,False,🧠 MEMORIA,B,B,0.66
+3,bm25,True,True,✅ RAG VERIFICADO,B,B,3.68
+3,dense,False,False,❌ FALLO,D,B,2.85
+3,hybrid,True,True,✅ RAG VERIFICADO,B,B,4.09
+4,baseline,True,False,🧠 MEMORIA,D,D,0.83
+4,bm25,True,True,✅ RAG VERIFICADO,D,D,3.46
+4,dense,True,True,✅ RAG VERIFICADO,D,D,4.21
+4,hybrid,True,True,✅ RAG VERIFICADO,D,D,3.78
