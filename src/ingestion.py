@@ -83,6 +83,3 @@ def ingest_data():
     print(f"✅ Base de datos vectorial lista en: {CHROMA_PATH}")
     print(f"   -> Ejemplo de chunk: '{chunks[0].page_content[:100]}...'")
     return True
-
-if __name__ == "__main__":
-    ingest_data()

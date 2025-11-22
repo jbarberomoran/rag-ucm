@@ -7,19 +7,27 @@ import os
 RESULTS_PATH = "./results/resultados_finales.csv"
 OUTPUT_DIR = "./results/plots"
 
+
+def eval(df : pd.DataFrame, ff  = "./results/resultados_finales.csv", pf = "./results/resultados_parciales.csv"):
+    df.to_csv(ff, index=False)
+
+    print("\n" + "="*30)
+    print("📊 RESUMEN DE PRECISIÓN (ACCURACY)")
+    print("="*30)
+    # Calcula el porcentaje de aciertos por método
+    print(df.groupby("method")["correct"].mean() * 100)
+    print(f"📁 Resultados parciales (log): {pf}")
+    print(f"📁 Resultados finales (clean): {ff}")
+
 def generate_dashboard():
     print("📊 GENERANDO DASHBOARD DE EVALUACIÓN...")
 
     # 1. Cargar Datos
-    if not os.path.exists(RESULTS_PATH):
+    if not os.path.exists(RESULTS_PATH):    #creo que ahora esto no puede saltar porque siempre se ha ejecutado en el launcher
         print(f"❌ Error: No encuentro el archivo '{RESULTS_PATH}'. Ejecuta main.py primero.")
         return
 
     df = pd.read_csv(RESULTS_PATH)
-    
-    # Crear carpeta para gráficos
-    if not os.path.exists(OUTPUT_DIR):
-        os.makedirs(OUTPUT_DIR)
 
     # Configurar estilo visual (Estilo 'Clean Code')
     sns.set_theme(style="whitegrid")
