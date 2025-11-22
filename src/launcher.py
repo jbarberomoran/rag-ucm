@@ -14,12 +14,12 @@ def setup_enviroment(rebuild_db=False, clear_results=True, results_dir="./result
     print("🧪 INICIANDO EXPERIMENTO RAG UCM...")
     # --- 1. LIMPIEZA INICIAL ---
     # Borramos el final anterior
-    if clear_results and os.path.exists(results_dir):
-        os.remove(results_dir)
+    if clear_results and os.path.exists(results_dir+ "/resultados_finales.csv"):
+        os.remove(results_dir+"/resultados_finales.csv")
         
     # Borramos el parcial anterior para empezar el log de cero
-    if clear_results and os.path.exists(results_dir):
-        os.remove(results_dir)
+    if clear_results and os.path.exists(results_dir + "/resultados_parciales.csv"):
+        os.remove(results_dir + "/resultados_parciales.csv")
 
     # 2. Cargar Dataset de Preguntas
     # --- MANEJO BASE DE DATOS: Comprobar si existe una o no, y generarla si se pide o necesario

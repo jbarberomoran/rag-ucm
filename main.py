@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 import pandas as pd
-from src.evaluation import generate_dashboard
+from src.evaluation import evaluate_results, generate_dashboard
 from src.launcher import setup_enviroment
 from src.queries import run_questions
 
@@ -35,7 +35,7 @@ def multiple_runs(n = 10):
     df_all.to_csv(FINAL_FILE, index=False)
 
     # --- Evaluación y dashboard
-    eval(df_all, FINAL_FILE, PARTIAL_FILE)
+    evaluate_results(df_all, FINAL_FILE, PARTIAL_FILE)
     generate_dashboard()
 
 def main():
@@ -50,7 +50,7 @@ def main():
 
     # --- Exportar Resultados y Resumen
  
-    eval(df, FINAL_FILE, PARTIAL_FILE)
+    evaluate_results(df, FINAL_FILE, PARTIAL_FILE) # np funciona
     generate_dashboard()
 
 if __name__ == "__main__":

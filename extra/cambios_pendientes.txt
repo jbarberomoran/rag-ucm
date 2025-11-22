@@ -6,6 +6,7 @@ añadir chunk esperado y chunk usado
 comparativa tamaño de chunks
 comparativa tipo de chunking (recursivo vs semantico) 
 jupyter notebook
+cambiar el tipo de evaluacion de la prueba(ia o a lo bruto)
 
 BONUS:
 Mitad hecho, falta comprobar la correccion de codigo y alguna rama de if
