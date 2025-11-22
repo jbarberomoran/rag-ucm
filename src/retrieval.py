@@ -4,6 +4,7 @@ warnings.filterwarnings("ignore")
 warnings.filterwarnings("ignore", message=".*Chroma.*")
 
 import os
+from functools import lru_cache
 from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.retrievers import BM25Retriever
@@ -14,6 +15,7 @@ from langchain_core.documents import Document
 CHROMA_PATH = "./data/chroma_db"
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"  # Modelo ligero y gratuito [cite: 13]
 
+@lru_cache(maxsize=None)
 def get_retriever(method="hybrid", k=4):
     """
     Configura el sistema de recuperación según la estrategia elegida.

@@ -1,17 +1,90 @@
-question_id,method,correct,verified_rag,status_label,predicted,ground_truth,response_time
-1,baseline,True,False,🧠 MEMORIA,C,C,0.66
-1,bm25,False,False,❌ FALLO,D,C,14.24
-1,dense,True,True,✅ RAG VERIFICADO,C,C,3.65
-1,hybrid,True,True,✅ RAG VERIFICADO,C,C,3.58
-2,baseline,True,False,🧠 MEMORIA,C,C,0.64
-2,bm25,False,False,❌ FALLO,A,C,2.78
-2,dense,False,False,❌ FALLO,A,C,2.77
-2,hybrid,False,False,❌ FALLO,A,C,2.77
-3,baseline,True,False,🧠 MEMORIA,B,B,0.66
-3,bm25,True,True,✅ RAG VERIFICADO,B,B,3.68
-3,dense,False,False,❌ FALLO,D,B,2.85
-3,hybrid,True,True,✅ RAG VERIFICADO,B,B,4.09
-4,baseline,True,False,🧠 MEMORIA,D,D,0.83
-4,bm25,True,True,✅ RAG VERIFICADO,D,D,3.46
-4,dense,True,True,✅ RAG VERIFICADO,D,D,4.21
-4,hybrid,True,True,✅ RAG VERIFICADO,D,D,3.78
+question_id,method,correct,verified_rag,status_label,predicted,ground_truth,response_time,raw_output
+1,baseline,False,False,❌ FALLO,A,C,0.51,A) High semantic similarity among retrieved passages leading to uniform attention
+1,bm25,True,True,✅ RAG VERIFICADO,C,C,0.52,C
+1,dense,True,True,✅ RAG VERIFICADO,C,C,1.14,C
+1,hybrid,True,True,✅ RAG VERIFICADO,C,C,0.95,C
+2,baseline,False,False,❌ FALLO,A,C,0.41,"A) It becomes linear in the number of tokens, reducing quadratic costs tied to layers"
+2,bm25,True,True,✅ RAG VERIFICADO,C,C,0.62,C
+2,dense,True,False,⚠️ SUERTE,C,C,0.73,C
+2,hybrid,True,True,✅ RAG VERIFICADO,C,C,0.93,C
+3,baseline,False,False,❌ FALLO,A,C,4.5,"A
+
+**Reasoning:**
+
+The question asks about the theoretical acceleration in TTFT/throughput as context length varies. Without specific context from the paper, I must rely on general knowledge of how context length affects the performance of transformer-based models, which are commonly used in applications involving TTFT (Time To First Token) and throughput.
+
+*   **Short Contexts:** For shorter contexts, the computational overhead associated with processing the input is relatively low. In many transformer architectures, the self-attention mechanism has a quadratic complexity with respect to the sequence length (O(n²)). However, when the context length (n) is small, this quadratic factor is less dominant. Techniques that aim to reduce this quadratic complexity, often by approximating attention or using more efficient mechanisms, can achieve significant speedups. A common theoretical speedup factor in such scenarios, especially when comparing to a naive quadratic attention, can be up to k², where 'k' might represent a factor related to the model's architecture or optimization.
+
+*   **Long Contexts:** As the context length increases, the quadratic complexity of standard self-attention becomes a bottleneck. Many research efforts focus on developing methods to handle long contexts more efficiently, aiming to achieve linear or near-linear complexity. If a method can reduce the complexity from O(n²) to O(n), the theoretical acceleration compared to the naive approach would be proportional to n. However, the question asks about acceleration *in TTFT/throughput* as context length varies, and often, the acceleration is discussed relative to a baseline or a specific architectural feature. For long contexts, achieving linear scaling (O(n)) is a significant improvement over quadratic scaling (O(n²)). If 'k' represents a factor related to the efficiency gains, then an acceleration up to k× (where k is a factor related to linear scaling) is a plausible outcome for long contexts, especially when compared to the quadratic baseline.
+
+Considering the options:
+
+*   **A) Up to k²× for short contexts and up to k× for long contexts:** This aligns with the idea that more significant theoretical speedups (potentially quadratic in some aspects of optimization or approximation) are achievable for short contexts where overhead is less, and more modest but still substantial linear-like speedups (k×) are targeted for long contexts to overcome quadratic bottlenecks.
+
+*   **B) Constant for short contexts and logarithmic in k for long contexts:** This doesn't fit the typical performance scaling of transformer models.
+
+*   **C) Up to k× for short contexts and up to k²× for long contexts:** This is the reverse of what is generally observed. Quadratic speedups are harder to achieve for long contexts due to inherent complexities.
+
+*   **D) Linear in k for all context lengths:** While linear scaling is a goal for long contexts, it's not necessarily the case for short contexts where other factors might dominate, and more aggressive optimizations might yield higher speedups.
+
+Therefore, option A provides the most logical characterization of theoretical acceleration in TTFT/throughput as context length varies, based on common trends in transformer research."
+3,bm25,True,True,✅ RAG VERIFICADO,C,C,0.73,C
+3,dense,True,True,✅ RAG VERIFICADO,C,C,0.78,C
+3,hybrid,True,True,✅ RAG VERIFICADO,C,C,0.52,C
+4,baseline,False,False,❌ FALLO,D,C,2.57,"D
+Rationale: The question asks about how important context chunks are selected and what decoding property is preserved. Without specific context from the paper, I must rely on general knowledge of how context is handled in advanced language models.
+
+Option A suggests random sampling, which is unlikely for selecting *important* chunks. Removing causal masking would fundamentally alter the decoder's behavior and is not a standard approach for context expansion.
+
+Option B mentions TF-IDF, a technique for keyword extraction, which might be used for selection, but disabling cross-attention is a significant modification and not a typical preservation of decoding properties.
+
+Option C proposes an RL policy with a specific reward, which is a plausible but complex mechanism. Preserving the autoregressive property is a common goal in language generation.
+
+Option D suggests selection by maximum similarity to the query. This is a very common and intuitive method for identifying relevant context. The idea of the decoder operating bidirectionally over the context, while not strictly preserving the *autoregressive* property in the traditional sense of left-to-right generation, allows for a more comprehensive understanding of the selected context in relation to the query. In some advanced architectures, bidirectional processing of context is indeed employed to better integrate it. Given the options, this seems the most logically sound combination of context selection and a plausible decoding strategy for leveraging that context.
+
+Since no context is provided, this is a logical deduction based on common practices in NLP. The selection by maximum similarity is a strong indicator of relevance, and bidirectional processing of context is a known technique for improving comprehension."
+4,bm25,True,True,✅ RAG VERIFICADO,C,C,0.63,C
+4,dense,True,True,✅ RAG VERIFICADO,C,C,0.94,C
+4,hybrid,True,True,✅ RAG VERIFICADO,C,C,0.65,C
+5,baseline,True,False,🧠 MEMORIA,C,C,0.48,C
+5,bm25,True,True,✅ RAG VERIFICADO,C,C,0.72,C
+5,dense,True,True,✅ RAG VERIFICADO,C,C,0.82,C
+5,hybrid,True,True,✅ RAG VERIFICADO,C,C,0.63,C
+6,baseline,True,False,🧠 MEMORIA,C,C,0.41,C
+6,bm25,True,True,✅ RAG VERIFICADO,C,C,0.42,C
+6,dense,True,True,✅ RAG VERIFICADO,C,C,0.86,C) To handle the exponential V^k combination space; difficulty is increased from single-chunk to multi-chunk reconstruction via data mixture scheduling
+6,hybrid,True,True,✅ RAG VERIFICADO,C,C,0.63,C
+7,baseline,False,False,❌ FALLO,D,C,0.52,D
+7,bm25,True,True,✅ RAG VERIFICADO,C,C,0.61,C
+7,dense,True,True,✅ RAG VERIFICADO,C,C,0.52,C
+7,hybrid,True,True,✅ RAG VERIFICADO,C,C,0.62,C
+8,baseline,False,False,❌ FALLO,D,C,0.84,D
+8,bm25,True,True,✅ RAG VERIFICADO,C,C,0.63,C
+8,dense,False,False,❌ FALLO,B,C,0.73,B
+8,hybrid,True,True,✅ RAG VERIFICADO,C,C,0.93,C
+9,baseline,False,False,❌ FALLO,A,C,2.12,"Since no context is provided, I must rely on my internal knowledge. However, the question specifically states to ""Use ONLY the provided context."" As there is no context, I cannot definitively answer the question based on the given constraints.
+
+However, I am instructed to guess logically if the answer is not in the context. Without any information from the paper, any guess would be purely speculative and not logically derived from the (non-existent) context.
+
+Given the strict instruction to use ONLY the provided context, and the absence of that context, I cannot fulfill the request. However, if forced to choose an option without any basis, it would be arbitrary.
+
+Let's assume, for the sake of providing an answer as requested, that there *was* context and one of these options was correct. I cannot determine which one.
+
+Since I am forced to guess and cannot refuse to answer, and I have no basis for a logical guess, I will pick an option at random.
+
+C"
+9,bm25,True,True,✅ RAG VERIFICADO,C,C,0.83,C
+9,dense,True,True,✅ RAG VERIFICADO,C,C,0.61,C
+9,hybrid,True,True,✅ RAG VERIFICADO,C,C,0.71,C
+10,baseline,True,False,🧠 MEMORIA,C,C,0.62,C
+10,bm25,True,True,✅ RAG VERIFICADO,C,C,0.53,C
+10,dense,True,True,✅ RAG VERIFICADO,C,C,0.73,C
+10,hybrid,True,True,✅ RAG VERIFICADO,C,C,0.73,C
+11,baseline,True,False,🧠 MEMORIA,C,C,0.57,C
+11,bm25,True,True,✅ RAG VERIFICADO,C,C,0.52,C
+11,dense,True,True,✅ RAG VERIFICADO,C,C,0.59,C
+11,hybrid,True,True,✅ RAG VERIFICADO,C,C,1.04,C
+12,baseline,False,False,❌ FALLO,A,C,0.52,A
+12,bm25,True,True,✅ RAG VERIFICADO,C,C,0.94,C
+12,dense,True,True,✅ RAG VERIFICADO,C,C,0.81,C
+12,hybrid,True,True,✅ RAG VERIFICADO,C,C,0.83,C

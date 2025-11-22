@@ -12,13 +12,24 @@ API_KEY = os.getenv("GOOGLE_API_KEY")
 
 def run_experiment():
     print("🧪 INICIANDO EXPERIMENTO RAG UCM...")
-    
-    # --- LIMPIEZA INICIAL: Borrar backup anterior ---
-    backup_path = "./results/resultados_parciales.csv"
-    if os.path.exists(backup_path):
-        os.remove(backup_path)
 
-    # 1. Cargar Dataset de Preguntas [cite: 20]
+    # Archivos de salida
+    FINAL_FILE = "./results/resultados_finales.csv"
+    PARTIAL_FILE = "./results/resultados_parciales.csv"
+
+    # --- CONFIGURACIÓN DE TIEMPOS (CONSTANTES) ---
+    SLEEP_TIME = 5
+    
+    # --- 1. LIMPIEZA INICIAL ---
+    # Borramos el final anterior
+    if os.path.exists(FINAL_FILE):
+        os.remove(FINAL_FILE)
+        
+    # Borramos el parcial anterior para empezar el log de cero
+    if os.path.exists(PARTIAL_FILE):
+        os.remove(PARTIAL_FILE)
+
+    # 2. Cargar Dataset de Preguntas
     path_json = "./data/questions.json"
     if not os.path.exists(path_json):
         print("❌ ERROR: No encuentro 'data/questions.json'")
@@ -27,19 +38,24 @@ def run_experiment():
     with open(path_json, "r", encoding="utf-8") as f:
         questions = json.load(f)
     
-    # --- CONFIGURACIÓN DE LA PRUEBA ---
-    # Para probar rápido, usa solo las 2 primeras. 
-    # Para el final, comenta esta línea:
-    questions_to_run = questions[:4]  
-    # questions_to_run = questions # <-- Descomenta esta para correr las 50 preguntas
+    # --- CONFIGURACIÓN ---
+    questions_to_run = questions[10:22]  # Descomentar para pruebas rápidas
+    # questions_to_run = questions      # Descomentar para EXAMEN COMPLETO (70 preguntas)
     
-    # Métodos a comparar [cite: 32]
-    # Puedes añadir "dense" y "bm25" a la lista si quieres comparar los 4
-    methods = ["baseline", "bm25", "dense", "hybrid"] 
-    
+    methods = ["baseline", "bm25", "dense", "hybrid"]
     results = []
 
-    # 2. Bucle Principal
+   # --- CALENTAMIENTO (WARM-UP) ---
+    print("\n CALENTANDO MOTORES (Cargando índices en memoria)...")
+    for method in methods:
+        try:
+            # Pregunta dummy para activar @lru_cache
+            _ = query_rag("Warm up", {"A":".","B":".","C":".","D":"."}, method, API_KEY)
+        except:
+            pass
+    print("✅ Calentamiento completado. Empezando...\n")
+
+    # 3. Bucle Principal
     print(f"🚀 Evaluando {len(questions_to_run)} preguntas con modelos: {methods}")
     
     for i, q in enumerate(questions_to_run):
@@ -48,80 +64,84 @@ def run_experiment():
         for method in methods:
             try:
                 print(f"   [{method.upper()}] Procesando...", end=" ")
+                
+                # CRONÓMETRO USUARIO
                 start_ts = time.time()
                 
-                # 1. LLAMADA AL CEREBRO (Responder)
+                # A) LLAMADA RESPUESTA
                 raw_answer, retrieved_docs = query_rag(q['question'], q['answers'], method, API_KEY)
                 
-                # 2. LIMPIEZA DE RESPUESTA
+                # Paramos el reloj (Latencia de usuario)
+                user_latency = time.time() - start_ts
+                
+                # PAUSA ANTI-429 (Vital para Gemma/Gemini Free)
+                time.sleep(SLEEP_TIME) 
+
+                # B) LIMPIEZA (REGEX)
                 import re
                 match = re.search(r'(?i)\b([A-D])\b', raw_answer)
                 predicted_letter = match.group(1).upper() if match else "X"
                 
-                # 3. EVALUACIÓN (¿Acertó?)
+                # C) EVALUACIÓN BÁSICA
                 correct_letter = q['correct_answer']
                 is_correct = (predicted_letter == correct_letter)
                 
-                # 4. EL JUICIO (Solo si acertó y no es baseline)
-                context_hit = False # Por defecto asumimos que no
-                
+                # D) EL JUEZ (LLM-as-a-Judge) - Solo si acertó
+                context_hit = False 
                 if is_correct and method != "baseline":
-                    # ¡Llamamos al segundo LLM para verificar!
-                    # Le pasamos la pregunta, la respuesta correcta (texto) y los docs
                     correct_text = q['answers'][correct_letter]
                     context_hit = verify_context_with_llm(q['question'], correct_text, retrieved_docs, API_KEY)
+                    # PAUSA ANTI-429 EXTRA (Porque hemos llamado al juez)
+                    time.sleep(SLEEP_TIME)
                 
-                elapsed = time.time() - start_ts
-
-                # CLASIFICACIÓN FINAL
+                # Clasificación para la consola
                 status = "❌ FALLO"
                 if is_correct:
-                    if method == "baseline":
-                        status = "🧠 MEMORIA" # Acertó sin documentos
-                    elif context_hit:
-                        status = "✅ RAG VERIFICADO" # Acertó y el texto lo respaldaba
-                    else:
-                        status = "⚠️ SUERTE" # Acertó pero el texto no tenía la info (Alucinación positiva)
+                    if method == "baseline": status = "🧠 MEMORIA"
+                    elif context_hit: status = "✅ RAG VERIFICADO"
+                    else: status = "⚠️ SUERTE"
                 
-                print(f"{status} (Pred: {predicted_letter})")
+                print(f"{status} (Pred: {predicted_letter} | T: {user_latency:.2f}s)")
                 
-                # 5. GUARDAR DATOS
+                # E) GUARDAR DATO EN LISTA (Memoria)
                 row = {
                     "question_id": i+1,
                     "method": method,
                     "correct": is_correct,
-                    "verified_rag": context_hit, # <--- Métrica Premium
+                    "verified_rag": context_hit,
                     "status_label": status,
                     "predicted": predicted_letter,
                     "ground_truth": correct_letter,
-                    "response_time": round(elapsed, 2)
+                    "response_time": round(user_latency, 2),
+                    "raw_output": raw_answer
                 }
                 results.append(row)
 
-                # Guardado de seguridad
+                # --- GUARDADO PARCIAL (APPEND) ---
+                # Esto es lo que se actualiza pregunta a pregunta
                 df_temp = pd.DataFrame([row])
-                file_exists = os.path.isfile("./results/resultados_finales.csv")
-                df_temp.to_csv("./results/resultados_finales.csv", mode='a', header=not file_exists, index=False)
-                
-                time.sleep(3) 
+                file_exists = os.path.isfile(PARTIAL_FILE)
+                df_temp.to_csv(PARTIAL_FILE, mode='a', header=not file_exists, index=False)
+                # ---------------------------------
                 
             except Exception as e:
                 print(f"❌ Error crítico en {method}: {e}")
 
 
-    # 3. Exportar Resultados y Resumen
+    # 4. Exportar Resultados y Resumen
     if not os.path.exists("./results"):
         os.makedirs("./results")
         
     df = pd.DataFrame(results)
-    df.to_csv("./results/resultados_finales.csv", index=False)
+    df.to_csv(FINAL_FILE, index=False)
     
     print("\n" + "="*30)
     print("📊 RESUMEN DE PRECISIÓN (ACCURACY)")
     print("="*30)
     # Calcula el porcentaje de aciertos por método
     print(df.groupby("method")["correct"].mean() * 100)
-    print(f"\n📁 Resultados detallados guardados en: ./results/resultados_finales.csv")
+    print(f"📁 Resultados parciales (log): {PARTIAL_FILE}")
+    print(f"📁 Resultados finales (clean): {FINAL_FILE}")
 
 if __name__ == "__main__":
     run_experiment()

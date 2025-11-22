@@ -3,7 +3,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from src.retrieval import get_retriever
 
 # Modelo usado
-MODEL_NAME = "models/gemma-3-27b-it" # O "gemini-2.5-flash" si quieres asegurar
+MODEL_NAME = "models/gemini-2.5-flash-lite" # O "gemini-2.5-flash" si quieres asegurar
 
 # PLANTILLA DEL PROMPT [cite: 38]
 # Instruimos al modelo para que actúe como experto y cite fuentes.

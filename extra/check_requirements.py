@@ -35,7 +35,7 @@ def test_sistema():
     try:
         # En main.py
         llm = ChatGoogleGenerativeAI(
-                model="models/gemini-2.5-flash", # Cambia esto por el modelo que quieras probar
+                model="models/gemini-2.5-flash-lite", # Cambia esto por el modelo que quieras probar
                 google_api_key=api_key,
                 temperature=0  #Para que las respuestas sean consistentes y reproducibles
         )
