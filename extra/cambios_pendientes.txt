@@ -1,4 +1,4 @@
-solucionar problema inicializacion base datos
+HECHO - solucionar problema inicializacion base datos
 solucionar tiempo bm25
 verificar implementacion de la comprobacion con ia
 añadir chunk esperado y chunk usado

@@ -3,6 +3,7 @@ import json
 import time
 import pandas as pd
 from dotenv import load_dotenv
+from src.ingestion import db_setup
 from src.rag_pipeline import query_rag
 from src.rag_pipeline import query_rag, verify_context_with_llm
 
@@ -10,7 +11,7 @@ from src.rag_pipeline import query_rag, verify_context_with_llm
 load_dotenv()
 API_KEY = os.getenv("GOOGLE_API_KEY")
 
-def run_experiment():
+def main():
     print("🧪 INICIANDO EXPERIMENTO RAG UCM...")
 
     # Archivos de salida
@@ -30,6 +31,10 @@ def run_experiment():
         os.remove(PARTIAL_FILE)
 
     # 2. Cargar Dataset de Preguntas
+    # --- MANEJO BASE DE DATOS: Comprobar si existe una o no, y generarla si se pide o necesario
+        db_setup()   #Poner true para automatizar y sacar muestreo
+
+    # 1. Cargar Dataset de Preguntas [cite: 20]
     path_json = "./data/questions.json"
     if not os.path.exists(path_json):
         print("❌ ERROR: No encuentro 'data/questions.json'")
@@ -144,4 +149,4 @@ def run_experiment():
     print(f"📁 Resultados finales (clean): {FINAL_FILE}")
 
 if __name__ == "__main__":
-    run_experiment()
+    main()
