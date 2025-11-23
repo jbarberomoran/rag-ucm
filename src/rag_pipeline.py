@@ -1,6 +1,7 @@
 from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
-from src.retrieval import get_retriever
+from src.retrieval import RetrievalEngine 
+from difflib import SequenceMatcher
 
 # Modelo usado
 MODEL_NAME = "models/gemini-2.5-flash-lite" # O "gemini-2.5-flash" si quieres asegurar
@@ -8,26 +9,30 @@ MODEL_NAME = "models/gemini-2.5-flash-lite" # O "gemini-2.5-flash" si quieres as
 # PLANTILLA DEL PROMPT [cite: 38]
 # Instruimos al modelo para que actúe como experto y cite fuentes.
 rag_template = """
-You are a technical expert taking an exam based on a research paper.
-Use ONLY the provided context to answer the question.
+You are a strict exam grading machine.
+Answer the multiple-choice question based ONLY on the provided context.
 
 CONTEXT FROM PAPER:
 {context}
 
----
-QUESTION: {question}
+QUESTION: 
+{question}
 
 OPTIONS:
-A) {option_a}
-B) {option_b}
-C) {option_c}
-D) {option_d}
+A. {option_a}
+B. {option_b}
+C. {option_c}
+D. {option_d}
 
 INSTRUCTIONS:
-1. Analyze the context carefully.
-2. You MUST select one option (A, B, C, or D).
-3. If the answer is not in the context, you MUST GUESS logically. Do not refuse to answer.
-4. OUTPUT FORMAT: Start your response with the letter (A, B, C, or D) and nothing else.
+1. Analyze the text deepy to find evidence for each option.
+2. Discard options that are not supported by the text.
+3. Select the single correct option (A, B, C, or D).
+4. CRITICAL: Output ONLY the single letter.
+5. Do NOT write "The answer is...". Do NOT explain your reasoning. Do NOT use punctuation.
+
+EXAMPLE OUTPUT:
+A
 """
 
 prompt = PromptTemplate(
@@ -45,7 +50,8 @@ def query_rag(question, options, method, api_key):
         context_text = "NO CONTEXT AVAILABLE. Use your internal knowledge."
     else:
         # Buscamos los 4 fragmentos más relevantes usando el método elegido
-        retriever = get_retriever(method=method, k=4)
+        engine = RetrievalEngine.get_instance()
+        retriever = engine.get_retriever(method=method, k=4)
         relevant_docs = retriever.invoke(question)
         # Unimos los fragmentos en un solo texto
         context_text = "\n\n".join([doc.page_content for doc in relevant_docs])
@@ -133,3 +139,41 @@ def verify_context_with_llm(question, correct_answer, docs, api_key):
     except Exception as e:
         print(f"   [Juez] Error: {e}")
         return False
+    
+def verify_ground_truth(retrieved_docs, ground_truth_ref, threshold=0.6):
+    """
+    Comprueba si el párrafo de referencia ('paper_reference') está contenido
+    dentro de los documentos recuperados, permitiendo ligeras variaciones.
+    
+    Args:
+        retrieved_docs: Lista de documentos recuperados.
+        ground_truth_ref: El texto original del JSON (La verdad absoluta).
+        threshold: 0.6 significa que al menos el 60% del texto debe coincidir.
+    
+    Returns:
+        tuple: (bool: Encontrado/No, float: Puntuación de similitud)
+    """
+    if not ground_truth_ref:
+        return False, 0.0
+
+    # 1. Normalización (Quitamos saltos de línea y mayúsculas para facilitar el match)
+    def clean(text):
+        return " ".join(text.split()).lower()
+
+    ref_clean = clean(ground_truth_ref)
+    # Unimos todos los chunks recuperados en un solo texto gigante
+    context_clean = clean(" ".join([doc.page_content for doc in retrieved_docs]))
+    
+    # 2. Búsqueda Rápida (Contención directa)
+    if ref_clean in context_clean:
+        return True, 1.0
+        
+    # 3. Búsqueda Robusta (Fuzzy Match)
+    # SequenceMatcher encuentra la subcadena común más larga
+    matcher = SequenceMatcher(None, ref_clean, context_clean)
+    match = matcher.find_longest_match(0, len(ref_clean), 0, len(context_clean))
+    
+    # Calculamos qué porcentaje de la referencia original encontramos
+    similarity = match.size / len(ref_clean)
+    
+    return similarity >= threshold, similarity
