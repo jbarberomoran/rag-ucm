@@ -11,7 +11,7 @@ def setup_enviroment(rebuild_db=False, clear_results=True, results_dir="./result
         clear_results (bool): Si True borra CSVs y carpetas de resultados previos.
         results_dir (str): Carpeta donde se estás los resultados de otras queries.
     """
-    print("🧪 INICIANDO EXPERIMENTO RAG UCM...")
+    print("\n🧪 INICIANDO EXPERIMENTO RAG UCM...")
     # --- 1. LIMPIEZA INICIAL ---
     # Borramos el final anterior
     if clear_results and os.path.exists(results_dir+ "/resultados_finales.csv"):

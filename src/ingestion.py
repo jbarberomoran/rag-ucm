@@ -4,6 +4,9 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
+from src.retrieval import RetrievalEngine
+
+from src.retrieval import RetrievalEngine
 
 # --- CONFIGURACIÓN ---
 # Chunking y almacenamiento vectorial
@@ -21,20 +24,20 @@ def db_setup(force_rebuild=False):
     # Caso 1 — BD ya existe
     if os.path.exists(CHROMA_PATH):
         if force_rebuild:
-            print("🔄 Reconstruyendo la base vectorial (force_rebuild=True)...")
+            print("\n🔄 Reconstruyendo la base vectorial (force_rebuild=True)...")
+            engine = RetrievalEngine.get_instance()
+            engine.unload_db()
             shutil.rmtree(CHROMA_PATH)
         else:
-            print("📦 Base vectorial ya existe → Reutilizando.")
+            print("\n📦 Base vectorial ya existe → Reutilizando.")
             return True 
         
     # Caso 2 — BD no existe o la estamos regenerando
     ingest_data()
 
 def ingest_data():
-
-    
     # Caso 2 — BD no existe o la estamos regenerando
-    print("🚀 INICIANDO PROCESO DE INGESTA DE DATOS...")
+    print("\n🚀 INICIANDO PROCESO DE INGESTA DE DATOS...")
 
     # 1. Verificar que el PDF existe
     if not os.path.exists(FILE_PATH):
