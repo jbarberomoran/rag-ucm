@@ -1,15 +1,24 @@
-HECHO - solucionar problema inicializacion base datos
-HECHO - refactorizar el codigo
+disclaimer ----- creo qu son 70 preguntas en vez de 50, no afecta en nada pero comprobar si es fallo nuestro
+
+
+Implementacion:
 HECHO? - solucionar tiempo bm25
-CAMBIAR - verificar implementacion de la comprobacion con ia
+HECHO? - verificar implementacion de la comprobacion con ia(ia o a lo bruto)
 añadir chunk esperado y chunk usado
 comparativa tamaño de chunks
 comparativa tipo de chunking (recursivo vs semantico) 
 jupyter notebook
-cambiar el tipo de evaluacion de la prueba(ia o a lo bruto)
+
+
+Evaluacion de resultados:
+no se ejecutan las segunda y tercera tabla - que es lo del status?:
+     la segunda porque da error con el status y la tercera porque no esta en el dashboard. Tienes pensado usarla?
+el ground truth lo hace solo con el primer chunk o con todos los que le damos a la ia?
+he mirado con el run_multiple times y el problema es que los resultados son deterministas creo asique en el fondo por correrlo 
+     veces no tenemos una mayor cantidad de muestras. Aun asi lo dejaba porque si subimos temperature entonces si tiene sentido usarlo
+     programa para muestreo
+
 
 BONUS:
-Mitad hecho, falta comprobar la correccion de codigo y alguna rama de if
-     que creo que nunca se llega a ejecutar -guardar todos los datos - correr varias veces y estadistica sobre los datos
-mas metricas y tablas
+
 Clear insights on when/why RAG helps, how it differs from BM25, and when to use each one -- supported by evidence

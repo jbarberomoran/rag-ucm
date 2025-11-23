@@ -12,6 +12,18 @@ def setup_enviroment(rebuild_db=False, clear_results=True, results_dir="./result
         results_dir (str): Carpeta donde se estás los resultados de otras queries.
     """
     print("\n🧪 INICIANDO EXPERIMENTO RAG UCM...")
+
+    # Creamos la carpeta de resultados si no existe
+    if not os.path.exists(results_dir):
+        os.makedirs(results_dir)
+
+    # Crear carpeta para gráficos si no existe
+    if not os.path.exists(results_dir + "/plots"):
+        os.makedirs(results_dir + "/plots")
+
+    if not os.path.exists(results_dir + "/resultados_finales.csv"):
+        os.makedirs(results_dir + "/resultados_finales.csv")
+
     # --- 1. LIMPIEZA INICIAL ---
     # Borramos el final anterior
     if clear_results and os.path.exists(results_dir+ "/resultados_finales.csv"):
@@ -24,12 +36,3 @@ def setup_enviroment(rebuild_db=False, clear_results=True, results_dir="./result
     # 2. Cargar Dataset de Preguntas
     # --- MANEJO BASE DE DATOS: Comprobar si existe una o no, y generarla si se pide o necesario
     db_setup(rebuild_db)
-
-    # Creamos la carpeta de resultados si no existe
-    if not os.path.exists(results_dir):
-        os.makedirs(results_dir)
-
-
-    # Crear carpeta para gráficos si no existe
-    if not os.path.exists(results_dir + "/plots"):
-        os.makedirs(results_dir + "/plots")
