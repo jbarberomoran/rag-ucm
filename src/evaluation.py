@@ -32,8 +32,8 @@ def plot_accuracy(df):
     accuracy_df = df.groupby("method")["correct"].mean() * 100
     accuracy_df = accuracy_df.reset_index()
     
-    sns.barplot(x="method", y="correct", data=accuracy_df, palette="viridis")
-    plt.title("Precisión General (Accuracy) por Método")
+    sns.barplot(x="method", y="correct", data=accuracy_df, hue = "method", legend = False, palette="viridis")
+    plt.title("1. Precisión General (Accuracy) por Método")
     plt.ylabel("% de Acierto")
     plt.ylim(0, 100)
     
@@ -86,7 +86,7 @@ def plot_rag_quality(df):
         edgecolor="black"
     )
     
-    plt.title("Calidad Real del RAG: ¿Ingeniería o Suerte?", fontsize=14, fontweight='bold')
+    plt.title("2. Calidad Real del RAG: ¿Ingeniería o Suerte?", fontsize=14, fontweight='bold')
     plt.ylabel("Cantidad de Preguntas")
     plt.legend(title="Diagnóstico", bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.tight_layout()
@@ -101,7 +101,7 @@ def plot_time_comparison(df):
     """Gráfico 3: Tiempo de respuesta"""
     plt.figure(figsize=(8, 5))
     sns.boxplot(x="method", y="response_time", data=df, palette="pastel")
-    plt.title("Distribución de Latencia por Método")
+    plt.title("3. Distribución de Latencia por Método")
     plt.ylabel("Segundos")
     
     plt.savefig(OUTPUT_DIR + "/grafico_tiempo.png")
@@ -110,7 +110,7 @@ def plot_time_comparison(df):
 
 def plot_latency_boxplot(df):
     """
-    Gráfico 3: Distribución de Tiempos (BOXPLOT)
+    Gráfico 4: Distribución de Tiempos (BOXPLOT)
     Muestra medianas, cuartiles y outliers.
     """
     plt.figure(figsize=(10, 6))
@@ -129,7 +129,7 @@ def plot_latency_boxplot(df):
     # Opcional: Añadir puntos reales encima (Swarmplot) para ver la distribución real
     # sns.stripplot(data=df, x="method", y="response_time", color="black", alpha=0.3, jitter=True)
 
-    plt.title("Comparativa de Latencia (Tiempo de Respuesta)", fontsize=14)
+    plt.title("4. Comparativa de Latencia (Tiempo de Respuesta)", fontsize=14)
     plt.ylabel("Tiempo (Segundos)")
     plt.xlabel("Método de Recuperación")
     plt.grid(True, axis='y', linestyle='--', alpha=0.7)

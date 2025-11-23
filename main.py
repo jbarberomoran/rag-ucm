@@ -18,14 +18,14 @@ def multiple_runs(n = 10):
     print("🧪 INICIANDO MUESTREO RAG UCM...")
     
     # --- Cargado de datos
-    setup_enviroment(False, False)
+    setup_enviroment(False, True)
 
     # --- Preguntas - cambiar el primero a None para ejecutarlo entero y lista no vacia para pruebas
     all_results = []
 
 
     for i in range(n):
-        df = run_questions(None, None, API_KEY, PARTIAL_FILE)
+        df = run_questions(range(0,10), None, API_KEY, PARTIAL_FILE)
         all_results.append(df)
 
     df_all = pd.concat(all_results, ignore_index=True)
@@ -54,4 +54,5 @@ def main():
     generate_dashboard()
 
 if __name__ == "__main__":
-    main()
+    #main()
+    multiple_runs(5)
