@@ -1,82 +1,142 @@
-import warnings
-# Silenciador local
-warnings.filterwarnings("ignore")
-warnings.filterwarnings("ignore", message=".*Chroma.*")
-
+import gc
 import os
-from functools import lru_cache
+import sys
+import warnings
+
 from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.retrievers import BM25Retriever
 from langchain.retrievers import EnsembleRetriever
 from langchain_core.documents import Document
 
-# Configuración
+# --- CONFIGURACIÓN ---
 CHROMA_PATH = "./data/chroma_db"
-EMBEDDING_MODEL = "all-MiniLM-L6-v2"  # Modelo ligero y gratuito [cite: 13]
+EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 
-@lru_cache(maxsize=None)
-def get_retriever(method="hybrid", k=4):
-    """
-    Configura el sistema de recuperación según la estrategia elegida.
-    Args:
-        method: 'dense', 'bm25', o 'hybrid'
-        k: Número de fragmentos de texto a recuperar (contexto)
-    """
-    # 1. Cargar Embeddings (El traductor texto -> números)
-    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+class RetrievalEngine:
+    _instance = None
 
-    # Filtramos por el texto exacto del error justo antes de llamar a Chroma
-    warnings.filterwarnings("ignore", category=DeprecationWarning)
-    
-    # 2. Conectar con la Base de Datos Vectorial (Chroma)
-    db = Chroma(persist_directory=CHROMA_PATH, embedding_function=embeddings)
-    
-    # -- ESTRATEGIA 1: DENSE RETRIEVAL [cite: 35] --
-    dense_retriever = db.as_retriever(search_kwargs={"k": k})
-    
-    if method == "dense":
+    def __init__(self):
+        """
+        Constructor privado (simulado). 
+        En Python no se puede hacer privado real, pero si alguien llama a 
+        RetrievalEngine() directamente, creará una instancia nueva desconectada 
+        del Singleton. Por eso usaremos get_instance().
+        """
+        # Inicializamos atributos en None (Lazy)
+        self._db = None
+        self._embeddings = None
+        self._bm25_retriever = None
+
+    @classmethod
+    def get_instance(cls):
+        """
+        Equivalente a: public static RetrievalEngine getInstance()
+        """
+        # 1. Si no existe la instancia, la creamos (Lazy Creation)
+        if cls._instance is None:
+            cls._instance = RetrievalEngine()
+        
+        # 2. Devolvemos la instancia almacenada
+        return cls._instance
+
+    @property
+    def db(self):
+        """
+        Getter inteligente. Aquí está el truco para que no explote en Windows.
+        Se conecta solo cuando le pides la DB.
+        """
+        if self._db is None:
+            self._embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            self._db = Chroma(persist_directory=CHROMA_PATH, embedding_function=self._embeddings)
+        return self._db
+
+    def unload_db(self):
+        """Método para desconectar manualmente"""
+        if self._db is not None:
+            self._db = None
+            self._embeddings = None
+            gc.collect()
+
+    def _get_bm25_retriever(self):
+        """Construye o devuelve el índice BM25 cacheado."""
+        if self._bm25_retriever is not None:
+            return self._bm25_retriever
+        
+        print("⚙️  Construyendo índice BM25 desde los documentos almacenados...")
+        try:
+            # Sacamos todos los documentos de Chroma para crear el índice inverso
+            # Nota: Esto puede ser lento si hay gigas de datos, para tu paper está bien.
+            raw_data = self.db.get()
+            texts = raw_data['documents']
+            metadatas = raw_data['metadatas']
+            
+            if not texts:
+                print("⚠️  ADVERTENCIA: La base de datos está vacía.")
+                return None
+                
+            docs_obj = [Document(page_content=t, metadata=m) for t, m in zip(texts, metadatas)]
+            
+            self._bm25_retriever = BM25Retriever.from_documents(docs_obj)
+            return self._bm25_retriever
+            
+        except Exception as e:
+            print(f"❌ Error construyendo BM25: {e}")
+            return None
+
+    def get_retriever(self, method, k=4):
+        """
+        Función principal para obtener el retriever configurado.
+        
+        Args:
+            method (str): "dense", "bm25", o "hybrid"
+            k (int): Número de documentos a recuperar
+        """
+        
+        # 1. Retriever Denso (Vectorial) - Siempre disponible desde self.db
+        dense_retriever = self.db.as_retriever(search_kwargs={"k": k})
+        
+        if method == "dense":
+            return dense_retriever
+            
+        # 2. Retriever BM25 (Palabras Clave)
+        bm25_retriever = self._get_bm25_retriever()
+            
+        # Actualizamos K dinámicamente en el objeto cacheado
+        bm25_retriever.k = k
+        
+        if method == "bm25":
+            return bm25_retriever
+            
+        # 3. Híbrido (Ensemble)
+        if method == "hybrid":
+            # 50% de peso a cada uno
+            return EnsembleRetriever(
+                retrievers=[bm25_retriever, dense_retriever],
+                weights=[0.5, 0.5]
+            )
+            
+        # Default fallback
         return dense_retriever
 
-    # -- ESTRATEGIA 2: BM25 (KEYWORD SEARCH) [cite: 34] --
-    # Truco: Sacamos los textos de Chroma para no volver a leer el PDF
-    try:
-        # Recuperamos todos los documentos guardados
-        docs_data = db.get() 
-        texts = docs_data['documents']
-        metadatas = docs_data['metadatas']
-        
-        # Reconstruimos los objetos Document para que BM25 los entienda
-        docs_obj = [Document(page_content=t, metadata=m) for t, m in zip(texts, metadatas)]
-        
-        bm25_retriever = BM25Retriever.from_documents(docs_obj)
-        bm25_retriever.k = k
-    except Exception as e:
-        print(f"❌ Error iniciando BM25 (¿Base de datos vacía?): {e}")
-        return None
-
-    if method == "bm25":
-        return bm25_retriever
-
-    # -- ESTRATEGIA 3: HYBRID (BONUS POINTS) [cite: 36] --
-    if method == "hybrid":
-        # Combinamos los resultados: 50% peso a vectores, 50% a palabras clave
-        ensemble_retriever = EnsembleRetriever(
-            retrievers=[bm25_retriever, dense_retriever],
-            weights=[0.5, 0.5]
-        )
-        return ensemble_retriever
-
-    else:
-        raise ValueError(f"Método '{method}' no reconocido. Usa: dense, bm25, hybrid")
-
-# Bloque de prueba rápida
-if __name__ == "__main__":
-    print("Probando buscador Híbrido...")
-    try:
-        r = get_retriever("hybrid")
-        res = r.invoke("What is REFRAG?")
-        print(f"✅ Éxito. Encontrados {len(res)} fragmentos.")
-        print(f"   Fragmento 1: {res[0].page_content[:100]}...")
-    except Exception as e:
-        print(f"❌ Falló: {e}")
+    # --- MÉTODO EXTRA: RE-RANKING (Opcional para el futuro) ---
+    def rerank_documents(self, query, docs, top_k=5):
+        """Si instalaste sentence-transformers, usa esto para mejorar precisión."""
+        try:
+            from sentence_transformers import CrossEncoder
+            if self._reranker is None:
+                print("⚖️  Cargando modelo Cross-Encoder (Re-ranker)...")
+                self._reranker = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+            
+            if not docs: return []
+            
+            pairs = [[query, doc.page_content] for doc in docs]
+            scores = self._reranker.predict(pairs)
+            
+            docs_with_scores = sorted(zip(docs, scores), key=lambda x: x[1], reverse=True)
+            return [doc for doc, score in docs_with_scores[:top_k]]
+            
+        except ImportError:
+            print("⚠️  Librería 'sentence_transformers' no instalada. Devuelvo docs sin reordenar.")
+            return docs[:top_k]

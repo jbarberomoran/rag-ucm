@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 import pandas as pd
-from src.evaluation import evaluate_results, generate_dashboard
+from src.evaluation import generate_dashboard, evaluate_results
 from src.launcher import setup_enviroment
 from src.queries import run_questions
 
@@ -39,14 +39,14 @@ def multiple_runs(n = 10):
     generate_dashboard()
 
 def main():
-    print("🧪 INICIANDO QUERY UCM...")
+    print("\n🧪 INICIANDO QUERY UCM...")
 
 
     # --- Cargado de datos - no se vuelve a crear la bd y borra resultados anteriores
     setup_enviroment(False, True)
 
     # --- Preguntas - cambiar el primero a None para ejecutarlo entero y lista no vacia para pruebas
-    df = run_questions([True], None, API_KEY, PARTIAL_FILE)
+    df = run_questions(range(0,10), None, API_KEY, PARTIAL_FILE)
 
     # --- Exportar Resultados y Resumen
  
