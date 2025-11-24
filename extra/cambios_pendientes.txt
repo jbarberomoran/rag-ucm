@@ -1,18 +1,18 @@
-disclaimer ----- creo qu son 70 preguntas en vez de 50, no afecta en nada pero comprobar si es fallo nuestro
+IMPLEMENTACION:
+HECHO - solucionar tiempo bm25
+HECHO (en resultados_finales.csv añadimos el contexto)- añadir chunk esperado y chunk usado
 
+HACIENDO (demasiado acierto por suerte, tal vez es la función verificar)- verificar implementacion de la comprobacion con ia(ia o a lo bruto)
+HACIENDO - comparativa tamaño de chunks (aumentado tamaño y overlap, no demasiada mejora)
 
-Implementacion:
-HECHO? - solucionar tiempo bm25
-HECHO? - verificar implementacion de la comprobacion con ia(ia o a lo bruto)
-añadir chunk esperado y chunk usado
-comparativa tamaño de chunks
 comparativa tipo de chunking (recursivo vs semantico) 
 jupyter notebook
 
+NOTAS:
+he cambiado los chunks recuperados (4 -> 8), no parece que haga demasiada diferencia
+he cambiado la función juez, ahora filtra mejor, y he bajado el umbral al 50% (DIFERENCIA ABISMAL: ver anteriores en results/resultados_importantes)
 
-Evaluacion de resultados:
-no se ejecutan las segunda y tercera tabla - que es lo del status?:
-     la segunda porque da error con el status y la tercera porque no esta en el dashboard. Tienes pensado usarla?
+EVALUACION DE RESULTADOS:
 el ground truth lo hace solo con el primer chunk o con todos los que le damos a la ia?
 he mirado con el run_multiple times y el problema es que los resultados son deterministas creo asique en el fondo por correrlo 
      veces no tenemos una mayor cantidad de muestras. Aun asi lo dejaba porque si subimos temperature entonces si tiene sentido usarlo
@@ -20,5 +20,4 @@ he mirado con el run_multiple times y el problema es que los resultados son dete
 
 
 BONUS:
-
 Clear insights on when/why RAG helps, how it differs from BM25, and when to use each one -- supported by evidence

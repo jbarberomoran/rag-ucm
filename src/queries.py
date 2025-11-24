@@ -110,12 +110,13 @@ def run_questions(questions_slice=None, methods=None, api_key=None, partial_file
                     "question_id": i+1,
                     "method": method,
                     "correct": is_correct,
-                    "verified_rag": found_evidence,
-                    "status_label": status_tag,
                     "predicted": predicted_letter,
                     "ground_truth": correct_letter,
                     "response_time": round(latency, 2),
-                    "raw_output": raw_answer
+                    "raw_output": raw_answer,
+                    "status": status_tag,
+                    "retrieval_score": evidence_score,
+                    "retrieved_docs": retrieved_docs
                 }
                 results.append(row)
 

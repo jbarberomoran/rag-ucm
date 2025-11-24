@@ -14,8 +14,8 @@ FILE_PATH = "./data/paper_refrag.pdf"
 CHROMA_PATH = "./data/chroma_db"
 
 # Estrategia: Tamaño mediano con overlap del 20% para mantener contexto
-CHUNK_SIZE = 1000  
-CHUNK_OVERLAP = 200 
+CHUNK_SIZE = 1200  
+CHUNK_OVERLAP = 350
 
 # force_build - flag para reiniciar la bd
 def db_setup(force_rebuild=False):
