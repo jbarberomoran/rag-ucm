@@ -3,11 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
-# Configuración
-INPUT_FILE = "./results/resultados importantes/24-11.csv"
-OUTPUT_DIR = "./results/plots"
-
-def evaluate_results(df : pd.DataFrame, ff  = INPUT_FILE):
+def evaluate_results(df : pd.DataFrame, ff  : str):
     print("\n" + "="*30)
     print("📊 RESUMEN DE PRECISIÓN (ACCURACY)")
     print("="*30)
@@ -15,7 +11,7 @@ def evaluate_results(df : pd.DataFrame, ff  = INPUT_FILE):
     print(df.groupby("method")["correct"].mean() * 100)
     print(f"📁 Resultados finales (clean): {ff}")
 
-def load_data(dir_input = INPUT_FILE):
+def load_data(dir_input : str):
     """Carga los datos y asegura que las columnas tengan el tipo correcto."""
     if not os.path.exists(dir_input):
         print(f"❌ Error: No se encuentra el archivo {dir_input}")
@@ -44,7 +40,7 @@ def clean_emojis(text):
     text = text.replace("✅", "").replace("⚠️", "").replace("📉", "").replace("❌", "")
     return text.strip()
 
-def plot_accuracy(df, dir_output=OUTPUT_DIR):
+def plot_accuracy(df, dir_output : str):
     """
     1. GRÁFICO DE PRECISIÓN (% de Aciertos)
     Usa la columna 'correct'.
@@ -89,7 +85,7 @@ def plot_accuracy(df, dir_output=OUTPUT_DIR):
     print("📊 Gráfico 1 guardado: Accuracy")
     plt.close()
 
-def plot_rag_quality(df, dir_output=OUTPUT_DIR):
+def plot_rag_quality(df, dir_output : str):
     """
     Gráfico 2: Calidad del RAG en PORCENTAJE (%)
     """
@@ -149,7 +145,7 @@ def plot_rag_quality(df, dir_output=OUTPUT_DIR):
     print("📊 Gráfico 2 guardado: RAG Quality (%)")
     plt.close()
 
-def plot_latency(df, dir_output=OUTPUT_DIR):
+def plot_latency(df, dir_output : str):
     """
     3. GRÁFICO DE LATENCIA (Boxplot)
     Usa la columna 'response_time'.
@@ -180,7 +176,7 @@ def plot_latency(df, dir_output=OUTPUT_DIR):
     print("📊 Gráfico 3 guardado: Latency")
     plt.close()
 
-def plot_retrieval_score(df, dir_output=OUTPUT_DIR):
+def plot_retrieval_score(df, dir_output : str):
     """
     4. GRÁFICO DE FIDELIDAD DE RECUPERACIÓN (Violin Plot)
     Usa la columna 'retrieval_score'.
@@ -212,7 +208,7 @@ def plot_retrieval_score(df, dir_output=OUTPUT_DIR):
     print("📊 Gráfico 4 guardado: Retrieval Fidelity")
     plt.close()
 
-def generate_dashboard(dir_input = INPUT_FILE, dir_output = OUTPUT_DIR):
+def generate_dashboard(dir_input, dir_output : str):
     print(f"\n📈 Iniciando generación de gráficos desde: {dir_input}")
     
     # 1. Crear carpeta de plots si no existe
@@ -228,10 +224,10 @@ def generate_dashboard(dir_input = INPUT_FILE, dir_output = OUTPUT_DIR):
         
         # 3. Generar gráficas
         try:
-            plot_accuracy(df)
-            plot_rag_quality(df)
-            plot_latency(df)
-            plot_retrieval_score(df)
+            plot_accuracy(df, dir_output)
+            plot_rag_quality(df, dir_output)
+            plot_latency(df, dir_output)
+            plot_retrieval_score(df, dir_output)
             print(f"\n✅ ¡Éxito! Gráficos generados en: {os.path.abspath(dir_output)}")
         except Exception as e:
             print(f"❌ Error generando gráficos: {e}")
@@ -239,4 +235,4 @@ def generate_dashboard(dir_input = INPUT_FILE, dir_output = OUTPUT_DIR):
             traceback.print_exc()
 
 if __name__ == "__main__":
-    generate_dashboard()
+    generate_dashboard("./results/resultados_parciales", "./results")

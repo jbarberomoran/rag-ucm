@@ -1,22 +1,22 @@
-IMPLEMENTACION:
-HECHO - solucionar tiempo bm25
-HECHO (en resultados_finales.csv añadimos el contexto)- añadir chunk esperado y chunk usado
+DAVID - IMPRESCINDIBLE: ahora para cada prueba se va a crear una carpeta con el nombre que le pongas al main. Si no pones   
+nada se crea una default. NINGUN RESULTADO IMPORTANTE DEBE ESTAR AHI PORQUE SE SOBREESCRIBIRA.
 
+----------------------------------------------
+README
+EN PROCESO
+
+IMPLEMENTACION:
 HACIENDO (demasiado acierto por suerte, tal vez es la función verificar)- verificar implementacion de la comprobacion con ia(ia o a lo bruto)
 HACIENDO - comparativa tamaño de chunks (aumentado tamaño y overlap, no demasiada mejora)
 
+EVALUACION:
+HECHO - Automatizar el guardado de datos segun version en main
 comparativa tipo de chunking (recursivo vs semantico) 
 jupyter notebook
 
 NOTAS:
 he cambiado los chunks recuperados (4 -> 8), no parece que haga demasiada diferencia
 he cambiado la función juez, ahora filtra mejor (DIFERENCIA ABISMAL: ver anteriores en results/resultados_importantes)
-
-EVALUACION DE RESULTADOS:
-el ground truth lo hace solo con el primer chunk o con todos los que le damos a la ia?
-he mirado con el run_multiple times y el problema es que los resultados son deterministas creo asique en el fondo por correrlo 
-     veces no tenemos una mayor cantidad de muestras. Aun asi lo dejaba porque si subimos temperature entonces si tiene sentido usarlo
-     programa para muestreo
 
 
 BONUS:
