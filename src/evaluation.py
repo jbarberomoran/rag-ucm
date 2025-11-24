@@ -4,7 +4,7 @@ import seaborn as sns
 import os
 
 # Configuración
-INPUT_FILE = "./results/resultados_finales.csv"
+INPUT_FILE = "./results/resultados importantes/24-11.csv"
 OUTPUT_DIR = "./results/plots"
 
 def evaluate_results(df : pd.DataFrame, ff  = INPUT_FILE):
