@@ -1,2 +1,3 @@
-resultados al ejecutar las 70 preguntas con juez basado en comparacion directa. Recursive chunking(1000,200)
+resultados al ejecutar las 70 preguntas con juez basado en comparacion directa.
+Recursive chunking(1000,200) recuperando 4 chunks por metodo
 anomalia: demasiados aciertos con suerte, es posible que la funcion de comparacion directa no esté funcionando adecuadamente
