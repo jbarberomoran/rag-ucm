@@ -10,7 +10,7 @@ jupyter notebook
 
 NOTAS:
 he cambiado los chunks recuperados (4 -> 8), no parece que haga demasiada diferencia
-he cambiado la función juez, ahora filtra mejor, y he bajado el umbral al 50% (DIFERENCIA ABISMAL: ver anteriores en results/resultados_importantes)
+he cambiado la función juez, ahora filtra mejor (DIFERENCIA ABISMAL: ver anteriores en results/resultados_importantes)
 
 EVALUACION DE RESULTADOS:
 el ground truth lo hace solo con el primer chunk o con todos los que le damos a la ia?

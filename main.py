@@ -45,7 +45,7 @@ def main():
     setup_enviroment(False, True)
 
     # --- Preguntas - cambiar el primero a None para ejecutarlo entero y lista no vacia para pruebas
-    df = run_questions(range(20,30), None, API_KEY, PARTIAL_FILE)
+    df = run_questions(None, None, API_KEY, PARTIAL_FILE)
 
     # --- Exportar Resultados y Resumen
     df.to_csv(FINAL_FILE, index=False)
