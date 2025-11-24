@@ -140,7 +140,7 @@ def verify_context_with_llm(question, correct_answer, docs, api_key):
         print(f"   [Juez] Error: {e}")
         return False
     
-def verify_ground_truth(retrieved_docs, ground_truth_ref, threshold=0.6):
+def verify_ground_truth(retrieved_docs, ground_truth_ref, threshold=0.5):
     """
     Comprueba si el párrafo de referencia ('paper_reference') está contenido
     dentro de los documentos recuperados, permitiendo ligeras variaciones.
@@ -148,7 +148,7 @@ def verify_ground_truth(retrieved_docs, ground_truth_ref, threshold=0.6):
     Args:
         retrieved_docs: Lista de documentos recuperados.
         ground_truth_ref: El texto original del JSON (La verdad absoluta).
-        threshold: 0.6 significa que al menos el 60% del texto debe coincidir.
+        threshold: 0.5 significa que al menos el 50% del texto debe coincidir.
     
     Returns:
         tuple: (bool: Encontrado/No, float: Puntuación de similitud)

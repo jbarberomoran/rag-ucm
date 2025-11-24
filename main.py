@@ -11,7 +11,7 @@ API_KEY = os.getenv("GOOGLE_API_KEY")
 
 
 # Archivos de salida
-FINAL_FILE = "./results/resultados_finales.csv"
+FINAL_FILE = "./results/resultados importantes/24-11-4.csv"
 PARTIAL_FILE = "./results/resultados_parciales.csv"
 
 def multiple_runs(n = 10):
@@ -25,7 +25,7 @@ def multiple_runs(n = 10):
 
 
     for i in range(n):
-        df = run_questions(range(0,10), None, API_KEY, PARTIAL_FILE)
+        df = run_questions(None, None, API_KEY, PARTIAL_FILE)
         all_results.append(df)
 
     df_all = pd.concat(all_results, ignore_index=True)
