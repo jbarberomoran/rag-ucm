@@ -1,7 +1,6 @@
 import os
 from src.ingestion import db_setup
-
-    
+ 
 def setup_enviroment(rebuild_db=False, clear_results=True, results_dir="./results"):
     """
     Configura el entorno de experimentos: BD vectorial y resultados.
@@ -20,9 +19,6 @@ def setup_enviroment(rebuild_db=False, clear_results=True, results_dir="./result
     # Crear carpeta para gráficos si no existe
     if not os.path.exists(results_dir + "/plots"):
         os.makedirs(results_dir + "/plots")
-
-    if not os.path.exists(results_dir + "/resultados_finales.csv"):
-        os.makedirs(results_dir + "/resultados_finales.csv")
 
     # --- 1. LIMPIEZA INICIAL ---
     # Borramos el final anterior

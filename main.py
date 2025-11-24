@@ -15,7 +15,7 @@ FINAL_FILE = "./results/resultados_finales.csv"
 PARTIAL_FILE = "./results/resultados_parciales.csv"
 
 def multiple_runs(n = 10):
-    print("🧪 INICIANDO MUESTREO RAG UCM...")
+    print("\n🧪 INICIANDO MUESTREO RAG UCM...")
     
     # --- Cargado de datos
     setup_enviroment(False, True)
@@ -41,18 +41,18 @@ def multiple_runs(n = 10):
 def main():
     print("\n🧪 INICIANDO QUERY UCM...")
 
-
     # --- Cargado de datos - no se vuelve a crear la bd y borra resultados anteriores
     setup_enviroment(False, True)
 
     # --- Preguntas - cambiar el primero a None para ejecutarlo entero y lista no vacia para pruebas
-    df = run_questions(range(0,10), None, API_KEY, PARTIAL_FILE)
+    df = run_questions(range(20,30), None, API_KEY, PARTIAL_FILE)
 
     # --- Exportar Resultados y Resumen
- 
-    evaluate_results(df, FINAL_FILE, PARTIAL_FILE) # np funciona
-    generate_dashboard()
+    df.to_csv(FINAL_FILE, index=False)
+
+    evaluate_results(df, FINAL_FILE) # np funciona
+    generate_dashboard(dir_input= FINAL_FILE, dir_output="./results/plots")
 
 if __name__ == "__main__":
-    #main()
-    multiple_runs(5)
+    main()
+    #multiple_runs(5)

@@ -49,9 +49,9 @@ def query_rag(question, options, method, api_key):
         # [cite: 33] Baseline: El modelo responde "de memoria" (alucinará o acertará por suerte)
         context_text = "NO CONTEXT AVAILABLE. Use your internal knowledge."
     else:
-        # Buscamos los 4 fragmentos más relevantes usando el método elegido
+        # Buscamos los 8 fragmentos más relevantes usando el método elegido
         engine = RetrievalEngine.get_instance()
-        retriever = engine.get_retriever(method=method, k=4)
+        retriever = engine.get_retriever(method=method, k=8)
         relevant_docs = retriever.invoke(question)
         # Unimos los fragmentos en un solo texto
         context_text = "\n\n".join([doc.page_content for doc in relevant_docs])
@@ -156,24 +156,35 @@ def verify_ground_truth(retrieved_docs, ground_truth_ref, threshold=0.6):
     if not ground_truth_ref:
         return False, 0.0
 
-    # 1. Normalización (Quitamos saltos de línea y mayúsculas para facilitar el match)
-    def clean(text):
-        return " ".join(text.split()).lower()
+    # --- EL SUPER LIMPIADOR ---
+    def super_clean(text):
+        # 1. Pasar a minúsculas
+        text = text.lower()
+        # 2. Eliminar saltos de línea y tabulaciones explícitamente
+        text = text.replace("\n", "").replace("\r", "").replace("\t", "")
+        # 3. Eliminar CUALQUIER carácter que no sea letra o número
+        # Esto convierte "accu- racy" en "accuracy"
+        return "".join([c for c in text if c.isalnum()])
 
-    ref_clean = clean(ground_truth_ref)
-    # Unimos todos los chunks recuperados en un solo texto gigante
-    context_clean = clean(" ".join([doc.page_content for doc in retrieved_docs]))
+    # Limpiamos la referencia
+    ref_clean = super_clean(ground_truth_ref)
     
-    # 2. Búsqueda Rápida (Contención directa)
+    # Unimos todo el contexto recuperado y lo limpiamos igual
+    full_context = "".join([doc.page_content for doc in retrieved_docs])
+    context_clean = super_clean(full_context)
+    
+    # DEBUG: Descomenta esto para ver por qué fallaba antes
+    # print(f"\n[JUEZ] Ref: {ref_clean[:30]}... | Ctx: {context_clean[:30]}...")
+
+    # 1. Búsqueda Exacta en la sopa de letras (Infalible si el texto está completo)
     if ref_clean in context_clean:
         return True, 1.0
         
-    # 3. Búsqueda Robusta (Fuzzy Match)
-    # SequenceMatcher encuentra la subcadena común más larga
+    # 2. Fuzzy Match (Por si faltan letras o hay errores de OCR)
     matcher = SequenceMatcher(None, ref_clean, context_clean)
     match = matcher.find_longest_match(0, len(ref_clean), 0, len(context_clean))
     
-    # Calculamos qué porcentaje de la referencia original encontramos
+    # Calculamos porcentaje
     similarity = match.size / len(ref_clean)
     
     return similarity >= threshold, similarity
