@@ -8,10 +8,13 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.retrievers import BM25Retriever
 from langchain.retrievers import EnsembleRetriever
 from langchain_core.documents import Document
+from sentence_transformers import CrossEncoder
+
 
 # --- CONFIGURACIÓN ---
 CHROMA_PATH = "./data/chroma_db"
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
 class RetrievalEngine:
     _instance = None
@@ -27,6 +30,7 @@ class RetrievalEngine:
         self._db = None
         self._embeddings = None
         self._bm25_retriever = None
+        self._reranker = None
 
     @classmethod
     def get_instance(cls):
@@ -64,7 +68,6 @@ class RetrievalEngine:
         if self._bm25_retriever is not None:
             return self._bm25_retriever
         
-        print("⚙️  Construyendo índice BM25 desde los documentos almacenados...")
         try:
             # Sacamos todos los documentos de Chroma para crear el índice inverso
             # Nota: Esto puede ser lento si hay gigas de datos, para tu paper está bien.
@@ -119,24 +122,32 @@ class RetrievalEngine:
             
         # Default fallback
         return dense_retriever
+    
+    @property
+    def reranker(self):
+        """Carga el modelo Cross-Encoder solo si se necesita."""
+        if self._reranker is None:
+            print(f"⚖️  [Lazy Load] Cargando Cross-Encoder ({RERANKER_MODEL})...")
+            self._reranker = CrossEncoder(RERANKER_MODEL)
+        return self._reranker
 
-    # --- MÉTODO EXTRA: RE-RANKING (Opcional para el futuro) ---
-    def rerank_documents(self, query, docs, top_k=5):
-        """Si instalaste sentence-transformers, usa esto para mejorar precisión."""
-        try:
-            from sentence_transformers import CrossEncoder
-            if self._reranker is None:
-                print("⚖️  Cargando modelo Cross-Encoder (Re-ranker)...")
-                self._reranker = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+    # RE-RANKING
+    def rerank_documents(self, query, docs, top_k=5):   
+        """
+        Recibe una lista de documentos candidatos, los puntúa contra la query
+        y devuelve los top_k mejores.
+        """
+        if not docs: return []
             
-            if not docs: return []
-            
-            pairs = [[query, doc.page_content] for doc in docs]
-            scores = self._reranker.predict(pairs)
-            
-            docs_with_scores = sorted(zip(docs, scores), key=lambda x: x[1], reverse=True)
-            return [doc for doc, score in docs_with_scores[:top_k]]
-            
-        except ImportError:
-            print("⚠️  Librería 'sentence_transformers' no instalada. Devuelvo docs sin reordenar.")
-            return docs[:top_k]
+        # 1. Preparamos los pares [Query, Documento]
+        pairs = [[query, doc.page_content] for doc in docs]
+        
+        # 2. Obtenemos las puntuaciones (scores)
+        scores = self.reranker.predict(pairs)
+        
+        # 3. Ordenamos de mayor a menor puntuación
+        docs_with_scores = sorted(zip(docs, scores), key=lambda x: x[1], reverse=True)
+        
+        # 4. Devolvemos solo los objetos Document del top_k
+        final_docs = [doc for doc, score in docs_with_scores[:top_k]]
+        return final_docs

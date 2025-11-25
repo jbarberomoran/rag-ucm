@@ -81,7 +81,7 @@ def main():
     setup_enviroment(False, clear_results, results_dir)
 
     # --- Preguntas - cambiar el primero a None para ejecutarlo entero y lista no vacia para pruebas
-    df = run_questions(list(range(1,6)), None, API_KEY, PARTIAL_FILE)
+    df = run_questions(list(range(3,4)), None, API_KEY, PARTIAL_FILE)
     #df = run_questions(None, None, API_KEY, PARTIAL_FILE)
 
     # --- Exportar Resultados y Resumen

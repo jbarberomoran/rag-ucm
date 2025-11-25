@@ -2,9 +2,10 @@ from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from src.retrieval import RetrievalEngine 
 from difflib import SequenceMatcher
+import time
 
 # Modelo usado
-MODEL_NAME = "models/gemini-2.5-flash-lite" # O "gemini-2.5-flash" si quieres asegurar
+MODEL_NAME = "models/gemini-2.0-flash" # O "gemini-2.5-flash" si quieres asegurar
 
 # PLANTILLA DEL PROMPT [cite: 38]
 # Instruimos al modelo para que actúe como experto y cite fuentes.
@@ -44,18 +45,34 @@ def query_rag(question, options, method, api_key):
     """
     Ejecuta el ciclo RAG completo para una pregunta.
     """
+    engine = RetrievalEngine.get_instance()
+    relevant_docs = []
+    
     # 1. Obtener Contexto (Si no es Baseline)
     if method == "baseline":
         # [cite: 33] Baseline: El modelo responde "de memoria" (alucinará o acertará por suerte)
         context_text = "NO CONTEXT AVAILABLE. Use your internal knowledge."
-    else:
-        # Buscamos los 8 fragmentos más relevantes usando el método elegido
-        engine = RetrievalEngine.get_instance()
-        retriever = engine.get_retriever(method=method, k=8)
-        relevant_docs = retriever.invoke(question)
-        # Unimos los fragmentos en un solo texto
-        context_text = "\n\n".join([doc.page_content for doc in relevant_docs])
 
+    else:
+        if method == "cross_encoder":
+            # PASO 1: Broad Retrieval (Traemos MUCHOS candidatos)
+            # Usamos Hybrid porque es el mejor "cazador" inicial
+            # Pedimos k=10 para asegurar que la respuesta esté ahí dentro
+            initial_retriever = engine.get_retriever(method="hybrid", k=10)
+            candidate_docs = initial_retriever.invoke(question)
+        
+            # PASO 2: Fine-Grained Reranking (Filtramos a los mejores)
+            # Nos quedamos con los 5 mejores para Gemini (menos ruido = más acierto)
+            relevant_docs = engine.rerank_documents(question, candidate_docs, top_k=5)
+        
+        else:
+            # Buscamos los 8 fragmentos más relevantes usando el método elegido
+            retriever = engine.get_retriever(method=method, k=8)
+            relevant_docs = retriever.invoke(question)
+
+        # Unimos el texto de los chunks recuperados
+        context_text = "\n\n".join([doc.page_content for doc in relevant_docs])
+            
     # 2. Configurar el LLM (Gemini)
     # Usamos temperature=0 para resultados reproducibles [cite: 47]
     llm = ChatGoogleGenerativeAI(
