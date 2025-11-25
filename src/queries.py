@@ -17,7 +17,7 @@ def run_questions(questions_slice=None, methods=None, api_key=None, partial_file
 
     Args:
         questions_slice (list[int]): Lista de preguntas a evaluar. Si None, se carga todo el dataset.
-        methods (list): Lista de métodos a usar. Default ["baseline", "bm25", "dense", "hybrid"]
+        methods (list): Lista de métodos a usar. Default ["baseline", "bm25", "dense", "hybrid", "cross_encoder"]
         api_key (str): API Key para el LLM
         partial_file (str): Ruta donde guardar resultados parciales
         sleep_time (int): Segundos de pausa entre consultas
@@ -26,7 +26,7 @@ def run_questions(questions_slice=None, methods=None, api_key=None, partial_file
         pd.DataFrame: DataFrame con resultados de todas las preguntas y métodos
     """
     if methods is None:
-        methods = ["baseline", "bm25", "dense", "hybrid"]
+        methods = ["baseline", "bm25", "dense", "hybrid", "cross_encoder"]
 
     # 1. Cargar dataset si no se pasa
     path_json = "./data/questions.json"
@@ -51,10 +51,36 @@ def run_questions(questions_slice=None, methods=None, api_key=None, partial_file
 
     results = []
 
-    # Inicializar motor de recuperación una vez
-    print("\n⚙️  Inicializando motores de búsqueda...")
-    engine = RetrievalEngine.get_instance()
-    engine.get_retriever("hybrid", k=1)
+    print("\n⚙️  Inicializando y calentando motores...")
+    try:
+        engine = RetrievalEngine.get_instance()
+        
+        # 1. Calentamiento de BUSCADORES (Dense, BM25, Hybrid)
+        # El Cross-Encoder también usa Hybrid por debajo, así que necesita esto también.
+        needs_bm25 = any(m in methods for m in ["bm25", "hybrid", "cross_encoder"])
+        needs_dense = "dense" in methods
+        
+        if needs_bm25:
+            print("   -> Construyendo índices Híbridos (BM25 + Vectores)...")
+            # Al pedir 'hybrid', forzamos la carga de Chroma Y la construcción del índice BM25
+            engine.get_retriever("hybrid", k=1)
+            
+        elif needs_dense:
+            print("   -> Conectando a Base de Datos Vectorial...")
+            # Si solo usamos dense, no perdemos tiempo construyendo BM25
+            engine.get_retriever("dense", k=1)
+
+        # 2. Calentamiento de MODELO DE IA (Cross-Encoder)
+        if "cross_encoder" in methods:
+            print("   -> Cargando modelo Cross-Encoder en RAM...")
+            # Accedemos a la propiedad para disparar la carga
+            _ = engine.reranker 
+            
+        print("\n✅ Todo listo")
+
+    except Exception as e:
+        print(f"⚠️ Error no crítico en calentamiento: {e}")
+        print("   (El programa continuará, pero la primera pregunta podría ir lenta)")
 
     # Bucle principal
     print(f"\n🚀 Evaluando {len(questions_to_run)} preguntas con modelos: {methods}")
