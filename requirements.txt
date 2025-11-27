@@ -17,8 +17,9 @@ google-ai-generativelanguage==0.6.6
 
 # --- BASE DE DATOS Y EMBEDDINGS ---
 langchain-chroma==0.1.2
-chromadb
+chromadb==0.4.24
 langchain-huggingface==0.0.3
+posthog >=2.4.0,<6.0.0
 # Para el Cross-Encoder y Embeddings locales
 sentence-transformers==3.0.1
 
@@ -31,4 +32,5 @@ seaborn                # Para gráficas bonitas
 tqdm                   # Barras de progreso
 rank_bm25              # Algoritmo BM25 para recuperación básica
 numpy                  # Cálculos numéricos
+jupyterlab             # Entorno de Jupyter
 ipykernel              # Para ejecutar en Jupyter Notebooks

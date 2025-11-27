@@ -3,8 +3,7 @@ import json
 import time
 import pandas as pd
 import re
-from src.rag_pipeline import query_rag, verify_context_with_llm
-from src.rag_pipeline import verify_ground_truth
+from src.rag_pipeline import query_rag, verify_ground_truth_v1
 from src.retrieval import RetrievalEngine
 
 
@@ -113,11 +112,7 @@ def run_questions(questions_slice=None, methods=None, api_key=None, partial_file
                 found_evidence, evidence_score = False, 0.0
 
                 if paper_ref:
-                    # Llamamos a la función que creamos en el Paso 1
-                    # from src.rag_pipeline import verify_ground_truth y 
-                    found_evidence, evidence_score = verify_ground_truth(retrieved_docs, paper_ref)
-                    if is_correct and not found_evidence:
-                        found_evidence = verify_context_with_llm(q['question'], paper_ref, retrieved_docs, api_key)
+                    found_evidence, evidence_score = verify_ground_truth_v1(retrieved_docs, paper_ref)
 
                 # 4. Clasificación del Resultado (Para tu Excel)
                 status_tag = ""

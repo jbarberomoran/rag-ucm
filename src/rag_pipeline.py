@@ -109,46 +109,82 @@ def query_rag(question, options, method, api_key):
     
     return response.content.strip(), relevant_docs
 
-# --- EL JUEZ (LLM-as-a-Judge) ---
-judge_template = """
-You are an impartial grader evaluating a RAG system.
-Your job is to determine if the provided CONTEXT contains sufficient information to answer the QUESTION correctly.
+# JUEZ V1: COINCIDENCIA DE TEXTO SIMPLE
+def verify_ground_truth_v1(retrieved_docs, ground_truth_ref, threshold=0.5):
+    """
+    Comprueba si el párrafo de referencia ('paper_reference') está contenido
+    dentro de los documentos recuperados, permitiendo ligeras variaciones.
+    
+    Args:
+        retrieved_docs: Lista de documentos recuperados.
+        ground_truth_ref: El texto original del JSON (La verdad absoluta).
+        threshold: 0.5 significa que al menos el 50% del texto debe coincidir.
+    
+    Returns:
+        tuple: (bool: Encontrado/No, float: Puntuación de similitud)
+    """
+    if not ground_truth_ref:
+        return False, 0.0
 
-QUESTION: {question}
-ANSWER REFERENCE: {paper_ref}
+    # Limpiamos la referencia
+    ref_clean = super_clean(ground_truth_ref)
+    
+    # Unimos todo el contexto recuperado y lo limpiamos igual
+    full_context = "".join([doc.page_content for doc in retrieved_docs])
+    context_clean = super_clean(full_context)
+    
+    # DEBUG: Descomenta esto para ver por qué fallaba antes
+    # print(f"\n[JUEZ] Ref: {ref_clean[:30]}... | Ctx: {context_clean[:30]}...")
+
+    # 1. Búsqueda Exacta en la sopa de letras (Infalible si el texto está completo)
+    if ref_clean in context_clean:
+        return True, 1.0
+        
+    # 2. Fuzzy Match (Por si faltan letras o hay errores de OCR)
+    matcher = SequenceMatcher(None, ref_clean, context_clean)
+    match = matcher.find_longest_match(0, len(ref_clean), 0, len(context_clean))
+    
+    # Calculamos porcentaje
+    similarity = match.size / len(ref_clean)
+    
+    return similarity >= threshold, similarity
+
+# PROMPT DEL JUEZ (Solo valida coincidencia de significado)
+JUDGE_PROMPT = """
+You are an objective evaluator text comparator.
+Check if the RETRIEVED CONTEXT contains the semantic information present in the GROUND TRUTH.
+
+GROUND TRUTH:
+{reference}
+
 RETRIEVED CONTEXT:
 {context}
 
 INSTRUCTIONS:
-1. Read the context and the question.
-2. Determine if the context justifies the correct answer.
-3. If the context gives the same answer than the answer reference, return "YES".
-4. If the context is irrelevant or misses the key fact, return "NO".
-5. Response format: Just one word ("YES" or "NO").
+1. Ignore OCR errors, line breaks, or minor spelling mistakes.
+2. Ignore extra information in the context.
+3. If the core fact of the Ground Truth is present in the Context, answer YES.
+4. Otherwise, answer NO.
+
+ANSWER (YES/NO):
 """
 
-judge_prompt = PromptTemplate(
-    template=judge_template,
-    input_variables=["question", "correct_answer", "context"]
-)
-
-def verify_context_with_llm(question, paper_ref, docs, api_key):
+# JUEZ 
+def verify_ground_truth_v2(paper_ref, retrieved_docs, api_key=None):
     """
-    Consulta al LLM si los documentos recuperados realmente justifican la respuesta.
-    Devuelve True si el contexto es válido, False si fue suerte.
+    Verifica si la referencia está en los docs.
+    Usa una estrategia en cascada: String Match -> LLM Match.
     """
     # Si no hay documentos (caso Baseline), obviamente no está justificado en el texto
-    if not docs:
+    if not retrieved_docs:
         return False
-
 
     # Limpiamos la referencia
     ref_clean = super_clean(paper_ref)
     
     # Unimos todo el contexto recuperado y lo limpiamos igual
-    full_context = "".join([doc.page_content for doc in docs])
+    full_context = "".join([doc.page_content for doc in retrieved_docs])
     context_clean = super_clean(full_context)
-
 
     # Configuramos un modelo 'Flash' barato para juzgar rápido
     llm_judge = ChatGoogleGenerativeAI(
@@ -156,11 +192,10 @@ def verify_context_with_llm(question, paper_ref, docs, api_key):
         google_api_key=api_key,
         temperature=0
     )
-
+    
     # Preguntamos al juez
-    formatted_prompt = judge_prompt.format(
-        question=question,
-        correct_answer=ref_clean,
+    formatted_prompt = JUDGE_PROMPT.format(
+        reference=ref_clean,
         context=context_clean
     )
     
@@ -172,8 +207,8 @@ def verify_context_with_llm(question, paper_ref, docs, api_key):
         print(f"   [Juez] Error: {e}")
         return False
     
-    
-def verify_ground_truth(retrieved_docs, ground_truth_ref, threshold=0.5):
+# JUEZ V1: COINCIDENCIA DE TEXTO SIMPLE
+def verify_ground_truth_v1(retrieved_docs, ground_truth_ref, threshold=0.5):
     """
     Comprueba si el párrafo de referencia ('paper_reference') está contenido
     dentro de los documentos recuperados, permitiendo ligeras variaciones.
