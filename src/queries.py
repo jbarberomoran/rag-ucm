@@ -9,7 +9,7 @@ from src.retrieval import RetrievalEngine
 
 
     # --- CONFIGURACIÓN DE TIEMPOS (CONSTANTES) ---
-SLEEP_TIME = 5
+SLEEP_TIME = 2  # Segundos de espera entre consultas para evitar 429
 
 def run_questions(questions_slice=None, methods=None, api_key=None, partial_file="./results/resultados_parciales.csv", sleep_time=SLEEP_TIME):
     """
