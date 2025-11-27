@@ -12,6 +12,8 @@ HACIENDO - comparativa tamaño de chunks (aumentado tamaño y overlap, no demasi
 EVALUACION:
 HECHO - Automatizar el guardado de datos segun version en main
 comparativa tipo de chunking (recursivo vs semantico) 
+
+RESULTADOS FINALES:
 jupyter notebook
 
 NOTAS:
