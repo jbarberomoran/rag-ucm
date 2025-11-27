@@ -7,6 +7,19 @@ import time
 # Modelo usado
 MODEL_NAME = "models/gemini-2.5-flash-lite" # O "gemini-2.5-flash" si quieres asegurar
 
+
+    # --- EL SUPER LIMPIADOR ---
+def super_clean(text):
+    # 1. Pasar a minúsculas
+    text = text.lower()
+    # 2. Eliminar saltos de línea y tabulaciones explícitamente
+    text = text.replace("\n", "").replace("\r", "").replace("\t", "")
+    # 3. Eliminar CUALQUIER carácter que no sea letra o número
+    # Esto convierte "accu- racy" en "accuracy"
+    return "".join([c for c in text if c.isalnum()])
+
+
+
 # PLANTILLA DEL PROMPT [cite: 38]
 # Instruimos al modelo para que actúe como experto y cite fuentes.
 rag_template = """
@@ -102,14 +115,14 @@ You are an impartial grader evaluating a RAG system.
 Your job is to determine if the provided CONTEXT contains sufficient information to answer the QUESTION correctly.
 
 QUESTION: {question}
-CORRECT ANSWER: {correct_answer}
+ANSWER REFERENCE: {paper_ref}
 RETRIEVED CONTEXT:
 {context}
 
 INSTRUCTIONS:
 1. Read the context and the question.
 2. Determine if the context justifies the correct answer.
-3. If the context mentions the answer explicitly or implicitly, return "YES".
+3. If the context gives the same answer than the answer reference, return "YES".
 4. If the context is irrelevant or misses the key fact, return "NO".
 5. Response format: Just one word ("YES" or "NO").
 """
@@ -119,7 +132,7 @@ judge_prompt = PromptTemplate(
     input_variables=["question", "correct_answer", "context"]
 )
 
-def verify_context_with_llm(question, correct_answer, docs, api_key):
+def verify_context_with_llm(question, paper_ref, docs, api_key):
     """
     Consulta al LLM si los documentos recuperados realmente justifican la respuesta.
     Devuelve True si el contexto es válido, False si fue suerte.
@@ -128,8 +141,14 @@ def verify_context_with_llm(question, correct_answer, docs, api_key):
     if not docs:
         return False
 
-    # Unimos el texto de los chunks
-    context_text = "\n\n".join([doc.page_content for doc in docs])
+
+    # Limpiamos la referencia
+    ref_clean = super_clean(paper_ref)
+    
+    # Unimos todo el contexto recuperado y lo limpiamos igual
+    full_context = "".join([doc.page_content for doc in docs])
+    context_clean = super_clean(full_context)
+
 
     # Configuramos un modelo 'Flash' barato para juzgar rápido
     llm_judge = ChatGoogleGenerativeAI(
@@ -141,17 +160,18 @@ def verify_context_with_llm(question, correct_answer, docs, api_key):
     # Preguntamos al juez
     formatted_prompt = judge_prompt.format(
         question=question,
-        correct_answer=correct_answer,
-        context=context_text
+        correct_answer=ref_clean,
+        context=context_clean
     )
     
     try:
         verdict = llm_judge.invoke(formatted_prompt).content.strip().upper()
-        # Limpiamos por si responde "YES." o "Answer: YES"
-        return "YES" in verdict
+        # Limpiamos por si responde si en varias formas
+        return "YES" in verdict.upper()
     except Exception as e:
         print(f"   [Juez] Error: {e}")
         return False
+    
     
 def verify_ground_truth(retrieved_docs, ground_truth_ref, threshold=0.5):
     """
@@ -168,16 +188,6 @@ def verify_ground_truth(retrieved_docs, ground_truth_ref, threshold=0.5):
     """
     if not ground_truth_ref:
         return False, 0.0
-
-    # --- EL SUPER LIMPIADOR ---
-    def super_clean(text):
-        # 1. Pasar a minúsculas
-        text = text.lower()
-        # 2. Eliminar saltos de línea y tabulaciones explícitamente
-        text = text.replace("\n", "").replace("\r", "").replace("\t", "")
-        # 3. Eliminar CUALQUIER carácter que no sea letra o número
-        # Esto convierte "accu- racy" en "accuracy"
-        return "".join([c for c in text if c.isalnum()])
 
     # Limpiamos la referencia
     ref_clean = super_clean(ground_truth_ref)

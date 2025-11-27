@@ -108,15 +108,16 @@ def run_questions(questions_slice=None, methods=None, api_key=None, partial_file
                 correct_letter = q['correct_answer']
                 is_correct = (predicted_letter == correct_letter)
 
-                # 3. --- NUEVO: JUEZ DE GROUND TRUTH ---
+                # 3. --- NUEVO: JUEZ DE GROUND TRUTH + LLM Judge ---
                 paper_ref = q.get('paper_reference', "")
                 found_evidence, evidence_score = False, 0.0
 
                 if paper_ref:
                     # Llamamos a la función que creamos en el Paso 1
-                    # Asegúrate de importarla al principio de main.py: 
-                    # from src.rag_pipeline import verify_ground_truth
+                    # from src.rag_pipeline import verify_ground_truth y 
                     found_evidence, evidence_score = verify_ground_truth(retrieved_docs, paper_ref)
+                    if is_correct and not found_evidence:
+                        found_evidence = verify_context_with_llm(q['question'], paper_ref, retrieved_docs, api_key)
 
                 # 4. Clasificación del Resultado (Para tu Excel)
                 status_tag = ""
