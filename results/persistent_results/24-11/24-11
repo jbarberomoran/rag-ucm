@@ -1,3 +1,4 @@
 resultados al ejecutar las 70 preguntas con juez basado en comparacion directa.
 Recursive chunking(1000,200) recuperando 4 chunks por metodo
+juez 60% umbral
 anomalia: demasiados aciertos con suerte, es posible que la funcion de comparacion directa no esté funcionando adecuadamente

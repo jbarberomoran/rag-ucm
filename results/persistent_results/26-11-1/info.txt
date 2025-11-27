@@ -1,0 +1,5 @@
+70 preguntas con juez basado en comparacion directa. 
+Recursive chunking(1200,350) recuperando 8 chunks por metodo
+Juez al 50% de umbral
+Añadido cross encoder
+Demasiado acierto por suerte, valorar cambiar el juez a un llm
