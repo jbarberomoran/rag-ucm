@@ -92,12 +92,13 @@ Supports *Local* mode (`results/local_results/`) and *Persistent* mode (`results
         - Boxplots for response latency
         - Violin plots for retrieval fidelity
 
-> **Tip:** Run `main.py try_n` on the terminal in orden to save the try number n results in that directory.
+> **Tip:** Run `main.py try_n` on the terminal in orden to save the try number n results in that directory<br> in orden not to overwrite other results.
+
 
 
 ##  Workflow Summary
 
-1. Load questions dataset (`questions.json`).
+1. Load questions dataset (questions.json).
 
 2. Initialize vector database (ChromaDB).
 
@@ -113,12 +114,10 @@ Supports *Local* mode (`results/local_results/`) and *Persistent* mode (`results
     - Generate plots/dashboard for comparison and analysis.
 
 
-
----
 ## Authors
 - Jorge Barbero Morán – UCM, Faculty of Mathematics
 - David Marcos Jimeno – UCM, Faculty of Mathematics
 
----
+
 ## License
 This project is licensed under the **MIT License**
