@@ -1,6 +1,4 @@
 import gc
-import os
-import sys
 import warnings
 
 from langchain_community.vectorstores import Chroma
@@ -127,7 +125,6 @@ class RetrievalEngine:
     def reranker(self):
         """Carga el modelo Cross-Encoder solo si se necesita."""
         if self._reranker is None:
-            print(f"⚖️  [Lazy Load] Cargando Cross-Encoder ({RERANKER_MODEL})...")
             self._reranker = CrossEncoder(RERANKER_MODEL)
         return self._reranker
 

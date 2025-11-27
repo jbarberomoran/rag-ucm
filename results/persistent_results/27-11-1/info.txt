@@ -1,0 +1,10 @@
+70 preguntas con juez basado en comparacion directa 
+Semantic chunking (95% umbral) recuperando 8 chunks por metodos normales
+Parametros cross encoder: hybrid(k=10), recuperamos top-k=5
+Juez al 50% de umbral
+
+OBSERVACIONES:
+
+
+SIGUIENTES PASOS:
+modificar juez, si falla la comparativa se lo enviariamos a una ia (estandar industria)

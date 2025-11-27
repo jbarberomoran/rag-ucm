@@ -1,3 +1,4 @@
 resultados al ejecutar las 70 preguntas con juez mejorado basado en comparacion directa. 
 Recursive chunking(1200,350) recuperando 8 chunks por metodo
+juez al 60% umbral
 anomalia: mejor proporcion de aciertos reales, es posible que la funcion de comparacion directa esté funcionando mejor

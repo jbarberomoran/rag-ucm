@@ -1,88 +1,122 @@
 import os
 import shutil
+import gc
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_experimental.text_splitter import SemanticChunker
 from src.retrieval import RetrievalEngine
 
-from src.retrieval import RetrievalEngine
 
 # --- CONFIGURACIÓN ---
 # Chunking y almacenamiento vectorial
 FILE_PATH = "./data/paper_refrag.pdf"
 CHROMA_PATH = "./data/chroma_db"
+EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
 
-# Estrategia: Tamaño mediano con overlap del 20% para mantener contexto
+# SELECTOR DE ESTRATEGIA: "recursive" o "semantic"
+# - "recursive": Rápido, corta por tamaño fijo (Recomendado para empezar).
+# - "semantic": Lento, usa IA para cortar por temas (Mejor calidad, requiere rebuild).
+CHUNKING_METHOD = "semantic"
+
+# Estrategia "recursive": Tamaño mediano con overlap del 20% para mantener contexto
 CHUNK_SIZE = 1200  
 CHUNK_OVERLAP = 350
 
-# force_build - flag para reiniciar la bd
-def db_setup(force_rebuild=False):
-    """Crea o reutiliza la base vectorial según el estado actual."""
-
-    # Caso 1 — BD ya existe
-    if os.path.exists(CHROMA_PATH):
-        if force_rebuild:
-            print("\n🔄 Reconstruyendo la base vectorial (force_rebuild=True)...")
-            engine = RetrievalEngine.get_instance()
-            engine.unload_db()
-            shutil.rmtree(CHROMA_PATH)
-        else:
-            print("\n📦 Base vectorial ya existe → Reutilizando.")
-            return True 
+def get_text_splitter(method, embedding_model=None):
+    """
+    Fábrica de Splitters: Devuelve la herramienta de corte según la configuración.
+    """
+    if method == "semantic":
+        # Corta cuando la diferencia semántica entre frases es muy alta
+        return SemanticChunker(
+            embedding_model,
+            breakpoint_threshold_type="percentile",
+            breakpoint_threshold_amount=95
+        )
         
-    # Caso 2 — BD no existe o la estamos regenerando
-    ingest_data()
+    else:
+        # Corte recursivo clásico por tamaño fijo
+        return RecursiveCharacterTextSplitter(
+            chunk_size=CHUNK_SIZE,
+            chunk_overlap=CHUNK_OVERLAP,
+            length_function=len,
+            separators=["\n\n", "\n", ". ", " ", ""]
+        )
 
 def ingest_data():
-    # Caso 2 — BD no existe o la estamos regenerando
-    print("\n🚀 INICIANDO PROCESO DE INGESTA DE DATOS...")
-
-    # 1. Verificar que el PDF existe
+    """Carga el PDF y lo trocea en chunks usando la estrategia seleccionada"""
     if not os.path.exists(FILE_PATH):
-        print(f"❌ ERROR: No encuentro el archivo '{FILE_PATH}'")
-        print("   -> Asegúrate de que el PDF del paper está en la carpeta 'data' y se llama 'paper_refrag.pdf'")
-        return False
+        print(f"\n❌ ERROR: No encuentro el archivo '{FILE_PATH}'")
+        return []
 
-    # 2. Limpiar base de datos anterior (para empezar de cero siempre)
-    if os.path.exists(CHROMA_PATH):
-        shutil.rmtree(CHROMA_PATH)
-        print("🧹 Base de datos anterior eliminada (limpieza).")
-
-    # 3. Cargar el PDF
-    print("📄 Cargando documento PDF...")
+    print("📄 Cargando PDF...")
     loader = PyPDFLoader(FILE_PATH)
     docs = loader.load()
-    print(f"   -> Documento cargado: {len(docs)} páginas.")
+    print(f"   -> PDF cargado: {len(docs)} páginas.")
 
-    # 4. Chunking (La parte creativa)
-    print(f"✂️  Troceando texto (Size={CHUNK_SIZE}, Overlap={CHUNK_OVERLAP})...")
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=CHUNK_SIZE,
-        chunk_overlap=CHUNK_OVERLAP,
-        separators=["\n\n", "\n", ". ", " ", ""], # Intenta no romper párrafos
-        length_function=len,
-    )
-    chunks = text_splitter.split_documents(docs)
-    print(f"   -> ¡Éxito! Se han generado {len(chunks)} fragmentos (chunks).")
+    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
 
-    # 5. Crear Embeddings y Guardar en ChromaDB
-    print("💾 Generando vectores (esto puede tardar un poco)...")
+    splitter = get_text_splitter(CHUNKING_METHOD, embeddings)
+
+    print(f"✂️ Procesando fragmentos")
+    chunks = splitter.split_documents(docs)
+
+    print(f"   -> Generados {len(chunks)} fragmentos.")
+
+    # chunks = [c for c in chunks if len(c.page_content) > 50] filtro para chunks pequeños
+
+    return chunks
+
+def create_vector_db(chunks):
+    """Guarda los chunks en ChromaDB."""
+    if not chunks: return
+
+    print("🧠 Guardando vectores en disco...")
+    # Volvemos a instanciar embeddings (ligero) para Chroma
+    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
     
-    # Usamos "all-MiniLM-L6-v2" que es el estándar de oro gratuito y rápido (Source 13)
-    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-    
-    # Creamos la BD y la guardamos en disco inmediatamente
-    db = Chroma.from_documents(
+    Chroma.from_documents(
         documents=chunks,
         embedding=embeddings,
         persist_directory=CHROMA_PATH
     )
+    print("💾 Base de datos guardada exitosamente.")
+
+def clear_existing_db():
+    """Borrado seguro de la base de datos."""
+    print("\n🔌 Desconectando motor de búsqueda...")
+    try:
+        engine = RetrievalEngine.get_instance()
+        engine.unload_db()
+        gc.collect()
+        if os.path.exists(CHROMA_PATH):
+            shutil.rmtree(CHROMA_PATH)
+    except Exception as e:
+        print(f"\n❌ Error inesperado borrando DB: {e}")
+        return False
     
-    # Forzar guardado (aunque en versiones nuevas es automático, es buena práctica)
-    db.persist() 
-    
-    print(f"✅ Base de datos vectorial lista en: {CHROMA_PATH}")
-    print(f"   -> Ejemplo de chunk: '{chunks[0].page_content[:100]}...'")
     return True
+
+# --- ENTRY POINT ---
+def db_setup(rebuild_db: bool = False):
+    db_exists = os.path.exists(CHROMA_PATH) and os.listdir(CHROMA_PATH)
+
+    if not rebuild_db and db_exists:
+        print("\n⏩ Base de datos encontrada. Saltando ingesta.")
+        return
+
+    if not db_exists:
+        print("\n⚠️  Base de datos no encontrada. Creando nueva...")
+    
+    if not clear_existing_db():
+        raise RuntimeError("\nNo se pudo limpiar la base de datos antigua.")
+
+    chunks = ingest_data()
+    create_vector_db(chunks)
+    print("✅ Setup completado.")
+
+if __name__ == "__main__":
+    # Si ejecutas este archivo directamente, fuerza reconstrucción
+    db_setup(rebuild_db=True)

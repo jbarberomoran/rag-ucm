@@ -5,7 +5,7 @@ from difflib import SequenceMatcher
 import time
 
 # Modelo usado
-MODEL_NAME = "models/gemini-2.0-flash" # O "gemini-2.5-flash" si quieres asegurar
+MODEL_NAME = "models/gemini-2.5-flash-lite" # O "gemini-2.5-flash" si quieres asegurar
 
 # PLANTILLA DEL PROMPT [cite: 38]
 # Instruimos al modelo para que actúe como experto y cite fuentes.
@@ -94,11 +94,7 @@ def query_rag(question, options, method, api_key):
     # 4. Enviar a Google y obtener respuesta
     response = llm.invoke(formatted_prompt)
     
-    # Devolvemos la respuesta Y TAMBIÉN los documentos usados (si los hubo)
-    # Si es baseline, relevant_docs no existe, devolvemos lista vacía
-    docs_used = relevant_docs if method != "baseline" else []
-    
-    return response.content.strip(), docs_used
+    return response.content.strip(), relevant_docs
 
 # --- EL JUEZ (LLM-as-a-Judge) ---
 judge_template = """
