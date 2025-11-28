@@ -3,12 +3,12 @@ import json
 import time
 import pandas as pd
 import re
-from src.rag_pipeline import query_rag, verify_ground_truth_v1
+from src.rag_pipeline import query_rag, verify_ground_truth_v1, verify_ground_truth_v3
 from src.retrieval import RetrievalEngine
 
 
     # --- CONFIGURACIÓN DE TIEMPOS (CONSTANTES) ---
-SLEEP_TIME = 2  # Segundos de espera entre consultas para evitar 429
+SLEEP_TIME = 7  # Segundos de espera entre consultas para evitar 429
 
 def run_questions(questions_slice=None, methods=None, api_key=None, partial_file="./results/resultados_parciales.csv", sleep_time=SLEEP_TIME):
     """
@@ -111,8 +111,10 @@ def run_questions(questions_slice=None, methods=None, api_key=None, partial_file
                 paper_ref = q.get('paper_reference', "")
                 found_evidence, evidence_score = False, 0.0
 
+                #if paper_ref:
+                    #found_evidence, evidence_score = verify_ground_truth_v1(retrieved_docs, paper_ref)
                 if paper_ref:
-                    found_evidence, evidence_score = verify_ground_truth_v1(retrieved_docs, paper_ref)
+                    found_evidence, evidence_score = verify_ground_truth_v3(retrieved_docs, paper_ref, api_key)
 
                 # 4. Clasificación del Resultado (Para tu Excel)
                 status_tag = ""
