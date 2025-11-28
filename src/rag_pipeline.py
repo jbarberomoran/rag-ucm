@@ -177,7 +177,7 @@ def verify_ground_truth_v2(paper_ref, retrieved_docs, api_key=None):
     """
     # Si no hay documentos (caso Baseline), obviamente no está justificado en el texto
     if not retrieved_docs:
-        return False
+        return False, 0.0
 
     # Limpiamos la referencia
     ref_clean = super_clean(paper_ref)
@@ -207,9 +207,64 @@ def verify_ground_truth_v2(paper_ref, retrieved_docs, api_key=None):
         print(f"   [Juez] Error: {e}")
         return False
     
-# JUEZ V1: COINCIDENCIA DE TEXTO SIMPLE
-def verify_ground_truth_v1(retrieved_docs, ground_truth_ref, threshold=0.5):
+
+def verify_ground_truth_v3(retrieved_docs, ground_truth_ref, api_key=None, threshold=0.5):
     """
+    Verifica si la referencia está en los docs usando:
+    1. Búsqueda exacta
+    2. Fuzzy matching
+    3. Juez LLM (solo si las anteriores fallan)
+
+    Se llama al LLM Judge solo si la respuesta es correcta pero se acierta por suerte
+    """
+    if not ground_truth_ref:
+        return False, 0.0  # Nada que comparar
+
+    # PREPARACIÓN DE TEXTOS
+    ref_clean = super_clean(ground_truth_ref)
+    full_context = "".join([doc.page_content for doc in retrieved_docs])
+    context_clean = super_clean(full_context)
+
+    # 1. MATCH EXACTO
+    if ref_clean in context_clean:
+        return True, 1.0  # match perfecto
+
+    # 2. FUZZY MATCH 
+    matcher = SequenceMatcher(None, ref_clean, context_clean)
+    match = matcher.find_longest_match(0, len(ref_clean), 0, len(context_clean))
+    similarity = match.size / len(ref_clean)
+
+    if similarity >= threshold:
+        return True, similarity  # match aproximado aceptable
+
+    # 3. LLM JUDGE
+    llm_judge = ChatGoogleGenerativeAI(
+        model=MODEL_NAME,
+        google_api_key=api_key,
+        temperature=0
+    )
+
+    formatted_prompt = JUDGE_PROMPT.format(
+        reference=ref_clean,
+        context=context_clean
+    )
+
+    try:
+        verdict = llm_judge.invoke(formatted_prompt).content.strip().upper()
+        llm_result = "YES" in verdict
+
+        # devolvemos el veredicto del LLM y la similitud del fuzzy
+        return llm_result, similarity
+
+    except Exception as e:
+        print(f"[Juez] Error LLM: {e}")
+        return False, similarity
+    
+
+    #Esto es lo mismo que lo de arriba, el v1. No se si quieres hacer algo
+"""# JUEZ V1: COINCIDENCIA DE TEXTO SIMPLE
+def verify_ground_truth_v1(retrieved_docs, ground_truth_ref, threshold=0.5):
+    
     Comprueba si el párrafo de referencia ('paper_reference') está contenido
     dentro de los documentos recuperados, permitiendo ligeras variaciones.
     
@@ -220,7 +275,7 @@ def verify_ground_truth_v1(retrieved_docs, ground_truth_ref, threshold=0.5):
     
     Returns:
         tuple: (bool: Encontrado/No, float: Puntuación de similitud)
-    """
+    
     if not ground_truth_ref:
         return False, 0.0
 
@@ -245,4 +300,4 @@ def verify_ground_truth_v1(retrieved_docs, ground_truth_ref, threshold=0.5):
     # Calculamos porcentaje
     similarity = match.size / len(ref_clean)
     
-    return similarity >= threshold, similarity
+    return similarity >= threshold, similarity"""

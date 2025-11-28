@@ -1,16 +1,11 @@
-DAVID - IMPRESCINDIBLE: ahora para cada prueba se va a crear una carpeta con el nombre que le pongas al main. Si no pones   
-nada se crea una default. NINGUN RESULTADO IMPORTANTE DEBE ESTAR AHI PORQUE SE SOBREESCRIBIRA.
-
-----------------------------------------------
-README
-EN PROCESO
-
 IMPLEMENTACION:
+
+NOTA - Has 3 funciones en el juez, v1, v2 y otro v1. No se si quieres hacer algo mas con el asique lo he comentado.
 HACIENDO (demasiado acierto por suerte, tal vez es la función verificar)- verificar implementacion de la comprobacion con ia(ia o a lo bruto)
 HACIENDO - comparativa tamaño de chunks (aumentado tamaño y overlap, no demasiada mejora)
 
 EVALUACION:
-HECHO - Automatizar el guardado de datos segun version en main
+HECHO - juez v3 de busqeda exacta + fuzzy match + juez llm
 comparativa tipo de chunking (recursivo vs semantico) 
 
 RESULTADOS FINALES:
