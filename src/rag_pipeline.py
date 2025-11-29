@@ -70,8 +70,8 @@ def query_rag(question, options, method, api_key):
         if method == "cross_encoder":
             # PASO 1: Broad Retrieval (Traemos MUCHOS candidatos)
             # Usamos Hybrid porque es el mejor "cazador" inicial
-            # Pedimos k=10 para asegurar que la respuesta esté ahí dentro
-            initial_retriever = engine.get_retriever(method="hybrid", k=10)
+            # Pedimos k=15 para asegurar que la respuesta esté ahí dentro
+            initial_retriever = engine.get_retriever(method="hybrid", k=15)
             candidate_docs = initial_retriever.invoke(question)
         
             # PASO 2: Fine-Grained Reranking (Filtramos a los mejores)
@@ -80,7 +80,7 @@ def query_rag(question, options, method, api_key):
         
         else:
             # Buscamos los 8 fragmentos más relevantes usando el método elegido
-            retriever = engine.get_retriever(method=method, k=8)
+            retriever = engine.get_retriever(method=method, k=5)
             relevant_docs = retriever.invoke(question)
 
         # Unimos el texto de los chunks recuperados
@@ -169,6 +169,30 @@ INSTRUCTIONS:
 ANSWER (YES/NO):
 """
 
+JUDGE_PROMPT2 ="""
+You are a strict text comparison engine, not an interpreter.
+Your task is to verify if the GROUND TRUTH text passage is physically present within the RETRIEVED CONTEXT.
+
+GROUND TRUTH (Target Text):
+{reference}
+
+RETRIEVED CONTEXT (Search Space):
+{context}
+
+INSTRUCTIONS:
+1. **LITERAL MATCH ONLY:** Do not evaluate meaning. Do not accept synonyms or paraphrasing. The words must be the same.
+2. **FORMATTING TOLERANCE:** You MUST ignore ONLY the following artifacts caused by PDF extraction:
+   - Line breaks (`\\n`) or carriage returns.
+   - Multiple spaces or tabs.
+   - Hyphenation at the end of lines (e.g., "algo- rithm" matches "algorithm").
+   - OCR artifacts (e.g., "fi" read as "f i").
+3. **DECISION:**
+   - If the *sequence of words* in Ground Truth appears in the Context (ignoring the formatting issues above), answer **YES**.
+   - If the wording is different, even if the meaning is identical, answer **NO**.
+
+ANSWER (YES/NO):
+"""
+
 # JUEZ 
 def verify_ground_truth_v2(paper_ref, retrieved_docs, api_key=None):
     """
@@ -190,11 +214,16 @@ def verify_ground_truth_v2(paper_ref, retrieved_docs, api_key=None):
     llm_judge = ChatGoogleGenerativeAI(
         model=MODEL_NAME, # Usa el mismo modelo que tengas disponible
         google_api_key=api_key,
-        temperature=0
+        temperature=0.0
     )
     
     # Preguntamos al juez
-    formatted_prompt = JUDGE_PROMPT.format(
+    #formatted_prompt = JUDGE_PROMPT.format(
+    #    reference=ref_clean,
+    #    context=context_clean
+    #)
+
+    formatted_prompt = JUDGE_PROMPT2.format(
         reference=ref_clean,
         context=context_clean
     )
@@ -252,6 +281,7 @@ def verify_ground_truth_v3(retrieved_docs, ground_truth_ref, api_key=None, thres
     try:
         verdict = llm_judge.invoke(formatted_prompt).content.strip().upper()
         llm_result = "YES" in verdict
+        if llm_result: similarity = 0.95 # Si el LLM dice que sí, asumimos match perfecto
 
         # devolvemos el veredicto del LLM y la similitud del fuzzy
         return llm_result, similarity
