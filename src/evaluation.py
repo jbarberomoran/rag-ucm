@@ -129,7 +129,7 @@ def plot_rag_quality(df, dir_output : str):
     for p in barplot.patches:
         height = p.get_height()
         if height > 0: # Solo etiquetar si la barra existe
-            barplot.annotate(f'{height:.0f}%',
+            barplot.annotate(f'{height:.1f}%',
                              (p.get_x() + p.get_width() / 2., height),
                              ha='center', va='bottom',
                              fontsize=9, color='black', xytext=(0, 3),
@@ -235,4 +235,4 @@ def generate_dashboard(dir_input, dir_output : str):
             traceback.print_exc()
 
 if __name__ == "__main__":
-    generate_dashboard("./results/resultados_parciales", "./results")
+    generate_dashboard("./results/resultados_parciales.csv", "./results")
