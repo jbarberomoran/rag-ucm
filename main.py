@@ -78,7 +78,7 @@ def main():
     FINAL_FILE, PARTIAL_FILE = build_paths(results_dir)
 
     # --- Cargado de datos - no se vuelve a crear la bd y borra resultados anteriores
-    setup_enviroment(False, clear_results, results_dir)
+    setup_enviroment(None, clear_results, results_dir)
 
     # --- Preguntas - cambiar el primero a None para ejecutarlo entero y lista no vacia para pruebas
     #df = run_questions(range(0,3), None, API_KEY, PARTIAL_FILE)
