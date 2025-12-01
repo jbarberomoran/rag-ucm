@@ -70,8 +70,8 @@ def query_rag(question, options, method, api_key):
         if method == "cross_encoder":
             # PASO 1: Broad Retrieval (Traemos MUCHOS candidatos)
             # Usamos Hybrid porque es el mejor "cazador" inicial
-            # Pedimos k=15 para asegurar que la respuesta esté ahí dentro
-            initial_retriever = engine.get_retriever(method="hybrid", k=15)
+            # Pedimos k=20 para asegurar que la respuesta esté ahí dentro
+            initial_retriever = engine.get_retriever(method="hybrid", k=20)
             candidate_docs = initial_retriever.invoke(question)
         
             # PASO 2: Fine-Grained Reranking (Filtramos a los mejores)
