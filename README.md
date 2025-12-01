@@ -40,45 +40,54 @@ The project includes:
 
 1. **Input Data**
 
-- **data/questions.json** - Contains 50 multiple-choice questions extracted from a technical research paper.
+  All of the following are on the `data/` directory:
+- `**data/questions.json**` - Contains 50 multiple-choice questions extracted from a technical research paper.
 Each question includes: the correct answer, three distractors, and an optional reference to the source paper.
 
-- This is the only input you need to provide for the experiment.
+- `**data/chroma_db**` - Embedded vector data base.
+- `**data/enunciado.pdf**` - The problem statement already described.
+- `**data/paper_refrag.pdf**` - The technical paper from which questions and answers are extracted.
 
 
 2. **Source Code**
-- **main.py** - Entry point of the project.
+- `**main.py**` - Entry point of the project.
 Supports *Local* mode (`results/local_results/`) and *Persistent* mode (`results/persistent_results/<test_name>/`).  
     - Calls the pipeline, saves final results, and generates plots.
+  
 
-- **launcher.py** - Sets up the environment for experiments.
+  All of the following are on the `src/` directory:
+- `**launcher.py**` - Sets up the environment for experiments.
     - Initializes the vector database (ChromaDB).
     - Clears previous results if needed.
     - Creates all necessary directories (plots, final CSVs, etc.).
 
-- **queries.py** - Main logic to execute questions.
+- `**src/ingestion.py**` - Prepares and creates the data base. Invoked by the launcher.
+
+- `**queries.py**` - Main logic to execute questions.
     - For each question and method it:
         - Sends the query to the LLM and retrieves documents.
         - Computes accuracy and evidence verification.
         - Stores partial results in results/resultados_parciales.csv.
         - Returns a DataFrame with all results for further evaluation.
 
-- **rag_pipeline.py** - Implements RAG logic for different retrieval methods
+- `**rag_pipeline.py**` - Implements RAG logic for different retrieval methods
     - Contains functions to verify ground truth against retrieved documents.
      Computes retrieval scores and status tags for each answer.
 
-- **retrieval.py** - Implements the retrieval engine.
+- `**retrieval.py**` - Implements the retrieval engine.
     - Provides a singleton engine to handle different retrieval methods efficiently.
 
-- **evaluation.py** - Evaluates the results and generates dashboards.
-    - `evaluate_results(df, final_file)` → prints accuracy and summary metrics.  
-    - `generate_dashboard(dir_input, dir_output)` → generates plots:  
+- `**evaluation.py**` - Evaluates the results and generates dashboards.
+    - evaluate_results(df, final_file) → prints accuracy and summary metrics.  
+    - generate_dashboard(dir_input, dir_output) → generates plots:  
         - Accuracy per method  
         - RAG quality distribution  
         - Response latency  
         - Retrieval fidelity
 
 3. **Output Data**
+
+Found on the `results/` directory:
 
 - **Partial results** - Always stored in `results/resultados_parciales.csv`.
     - Updated after each question is processed.
