@@ -45,7 +45,7 @@ def get_text_splitter(method, embedding_model=None):
             separators=["\n\n", "\n", ". ", " ", ""]
         )
 
-def ingest_data():
+def ingest_data(chunking_method=CHUNKING_METHOD):
     """Carga el PDF y lo trocea en chunks usando la estrategia seleccionada"""
     if not os.path.exists(FILE_PATH):
         print(f"\n❌ ERROR: No encuentro el archivo '{FILE_PATH}'")
@@ -58,7 +58,7 @@ def ingest_data():
 
     embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
 
-    splitter = get_text_splitter(CHUNKING_METHOD, embeddings)
+    splitter = get_text_splitter(chunking_method, embeddings)
 
     print(f"✂️ Procesando fragmentos")
     chunks = splitter.split_documents(docs)
@@ -100,7 +100,7 @@ def clear_existing_db():
     return True
 
 # --- ENTRY POINT ---
-def db_setup(rebuild_db: bool = False):
+def db_setup(rebuild_db: bool = False, chunking_method=CHUNKING_METHOD):
     db_exists = os.path.exists(CHROMA_PATH) and os.listdir(CHROMA_PATH)
 
     if not rebuild_db and db_exists:
@@ -113,7 +113,7 @@ def db_setup(rebuild_db: bool = False):
     if not clear_existing_db():
         raise RuntimeError("\nNo se pudo limpiar la base de datos antigua.")
 
-    chunks = ingest_data()
+    chunks = ingest_data(chunking_method)
     create_vector_db(chunks)
     print("✅ Setup completado.")
 
