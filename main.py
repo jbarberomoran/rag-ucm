@@ -18,7 +18,7 @@ def build_paths(base_dir):
     final_file = os.path.join(base_dir, "resultados_finales.csv")
     return final_file, "./results/resultados_parciales.csv"
 
-def multiple_runs(n = 10):
+def multiple_runs(n = 30):
     print("\n🧪 INICIANDO MUESTREO RAG UCM...")
     
     #miramos si queremos resultados persistentes o no
@@ -91,7 +91,7 @@ def main():
     generate_dashboard(dir_input= FINAL_FILE, dir_output=os.path.join(results_dir, "plots"))
 
 if __name__ == "__main__":
-    main()
+    multiple_runs()
 
 #Ejecutar python main.py
 #En caso de querer guardar los resultados de la ejecucion de antemano: pyhton main.py nombre_carpeta o bien "Nombre carpeta"
