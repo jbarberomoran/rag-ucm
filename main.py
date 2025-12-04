@@ -18,7 +18,7 @@ def build_paths(base_dir):
     final_file = os.path.join(base_dir, "resultados_finales.csv")
     return final_file, "./results/resultados_parciales.csv"
 
-def multiple_runs(n = 30):
+def multiple_runs(n = 1):
     print("\n🧪 INICIANDO MUESTREO RAG UCM...")
     
     #miramos si queremos resultados persistentes o no
@@ -38,7 +38,7 @@ def multiple_runs(n = 30):
     FINAL_FILE, PARTIAL_FILE = build_paths(results_dir)
 
     # --- Cargado de datos
-    setup_enviroment(False, clear_results, results_dir)
+    setup_enviroment(True, clear_results, results_dir)
 
     # --- Preguntas - cambiar el primero a None para ejecutarlo entero y lista no vacia para pruebas
     all_results = []
