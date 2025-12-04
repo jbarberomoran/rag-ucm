@@ -15,7 +15,6 @@ def super_clean(text):
     # 2. Eliminar saltos de línea y tabulaciones explícitamente
     text = text.replace("\n", "").replace("\r", "").replace("\t", "")
     # 3. Eliminar CUALQUIER carácter que no sea letra o número
-    # Esto convierte "accu- racy" en "accuracy"
     return "".join([c for c in text if c.isalnum()])
 
 
@@ -63,19 +62,18 @@ def query_rag(question, options, method, api_key):
     
     # 1. Obtener Contexto (Si no es Baseline)
     if method == "baseline":
-        # [cite: 33] Baseline: El modelo responde "de memoria" (alucinará o acertará por suerte)
+        #El modelo responde "de memoria" (alucinará o acertará por suerte)
         context_text = "NO CONTEXT AVAILABLE. Use your internal knowledge."
 
     else:
         if method == "cross_encoder":
             # PASO 1: Broad Retrieval (Traemos MUCHOS candidatos)
-            # Usamos Hybrid porque es el mejor "cazador" inicial
             # Pedimos k=20 para asegurar que la respuesta esté ahí dentro
             initial_retriever = engine.get_retriever(method="hybrid", k=20)
             candidate_docs = initial_retriever.invoke(question)
         
             # PASO 2: Fine-Grained Reranking (Filtramos a los mejores)
-            # Nos quedamos con los 5 mejores para Gemini (menos ruido = más acierto)
+            # Nos quedamos con los 5 mejores para Gemini
             relevant_docs = engine.rerank_documents(question, candidate_docs, top_k=5)
         
         else:
@@ -87,7 +85,7 @@ def query_rag(question, options, method, api_key):
         context_text = "\n\n".join([doc.page_content for doc in relevant_docs])
             
     # 2. Configurar el LLM (Gemini)
-    # Usamos temperature=0 para resultados reproducibles [cite: 47]
+    # Usamos temperature=0 para resultados reproducibles
     llm = ChatGoogleGenerativeAI(
         model=MODEL_NAME, 
         google_api_key=api_key,
@@ -132,11 +130,8 @@ def verify_ground_truth_v1(retrieved_docs, ground_truth_ref, threshold=0.5):
     # Unimos todo el contexto recuperado y lo limpiamos igual
     full_context = "".join([doc.page_content for doc in retrieved_docs])
     context_clean = super_clean(full_context)
-    
-    # DEBUG: Descomenta esto para ver por qué fallaba antes
-    # print(f"\n[JUEZ] Ref: {ref_clean[:30]}... | Ctx: {context_clean[:30]}...")
 
-    # 1. Búsqueda Exacta en la sopa de letras (Infalible si el texto está completo)
+    # 1. Búsqueda Exacta en la sopa de letras
     if ref_clean in context_clean:
         return True, 1.0
         
@@ -217,12 +212,6 @@ def verify_ground_truth_v2(paper_ref, retrieved_docs, api_key=None):
         temperature=0.0
     )
     
-    # Preguntamos al juez
-    #formatted_prompt = JUDGE_PROMPT.format(
-    #    reference=ref_clean,
-    #    context=context_clean
-    #)
-
     formatted_prompt = JUDGE_PROMPT2.format(
         reference=ref_clean,
         context=context_clean

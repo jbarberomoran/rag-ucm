@@ -21,7 +21,7 @@ EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
 # - "semantic": Lento, usa IA para cortar por temas (Mejor calidad, requiere rebuild).
 CHUNKING_METHOD = "semantic"
 
-# Estrategia "recursive": Tamaño mediano con overlap del 20% para mantener contexto
+# Estrategia "recursive": Tamaño mediano con overlap del ~30% para mantener contexto
 CHUNK_SIZE = 1200  
 CHUNK_OVERLAP = 350
 
@@ -65,8 +65,6 @@ def ingest_data(chunking_method=CHUNKING_METHOD):
     chunks = splitter.split_documents(docs)
 
     print(f"   -> Generados {len(chunks)} fragmentos.")
-
-    # chunks = [c for c in chunks if len(c.page_content) > 50] filtro para chunks pequeños
 
     return chunks
 
