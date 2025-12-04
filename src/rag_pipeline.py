@@ -5,10 +5,10 @@ from difflib import SequenceMatcher
 import time
 
 # Modelo usado
-MODEL_NAME = "models/gemini-2.5-flash-lite" # O "gemini-2.5-flash" si quieres asegurar
+MODEL_NAME = "models/gemini-2.5-flash-lite"
 
 
-    # --- EL SUPER LIMPIADOR ---
+    # --- LIMPIADOR ---
 def super_clean(text):
     # 1. Pasar a minúsculas
     text = text.lower()
@@ -20,7 +20,7 @@ def super_clean(text):
 
 
 
-# PLANTILLA DEL PROMPT [cite: 38]
+# PLANTILLA DEL PROMPT
 # Instruimos al modelo para que actúe como experto y cite fuentes.
 rag_template = """
 You are a strict exam grading machine.
