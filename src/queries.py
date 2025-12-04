@@ -54,7 +54,7 @@ def run_questions(questions_slice=None, methods=None, api_key=None, partial_file
     try:
         engine = RetrievalEngine.get_instance()
         
-        # 1. Calentamiento de BUSCADORES (Dense, BM25, Hybrid)
+        # 1. Inicializando de BUSCADORES (Dense, BM25, Hybrid)
         # El Cross-Encoder también usa Hybrid por debajo, así que necesita esto también.
         needs_bm25 = any(m in methods for m in ["bm25", "hybrid", "cross_encoder"])
         needs_dense = "dense" in methods
@@ -116,7 +116,7 @@ def run_questions(questions_slice=None, methods=None, api_key=None, partial_file
                 #if paper_ref:
                     #found_evidence, evidence_score = verify_ground_truth_v3(retrieved_docs, paper_ref, api_key)
 
-                # 4. Clasificación del Resultado (Para tu Excel)
+                # 4. Clasificación del Resultado
                 status_tag = ""
                 if is_correct and found_evidence:
                     status_tag = "✅ ACIERTO PERFECTO (RAG)"
