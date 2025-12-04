@@ -63,7 +63,7 @@ def query_rag(question, options, method, api_key):
     
     # 1. Obtener Contexto (Si no es Baseline)
     if method == "baseline":
-        # [cite: 33] Baseline: El modelo responde "de memoria" (alucinará o acertará por suerte)
+        # Baseline: El modelo responde "de memoria" (alucinará o acertará por suerte)
         context_text = "NO CONTEXT AVAILABLE. Use your internal knowledge."
 
     else:
