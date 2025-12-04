@@ -235,4 +235,4 @@ def generate_dashboard(dir_input, dir_output : str):
             traceback.print_exc()
 
 if __name__ == "__main__":
-    generate_dashboard("./results/resultados_parciales.csv", "./results")
+    generate_dashboard("results/persistent_results/resultados_definitivos/resultados_finales.csv", "results/persistent_results/resultados_definitivos/plots")
