@@ -68,7 +68,6 @@ class RetrievalEngine:
         
         try:
             # Sacamos todos los documentos de Chroma para crear el índice inverso
-            # Nota: Esto puede ser lento si hay gigas de datos, para tu paper está bien.
             raw_data = self.db.get()
             texts = raw_data['documents']
             metadatas = raw_data['metadatas']
@@ -101,7 +100,7 @@ class RetrievalEngine:
         if method == "dense":
             return dense_retriever
             
-        # 2. Retriever BM25 (Palabras Clave)
+        # 2. Retriever BM25
         bm25_retriever = self._get_bm25_retriever()
             
         # Actualizamos K dinámicamente en el objeto cacheado
@@ -136,10 +135,10 @@ class RetrievalEngine:
         """
         if not docs: return []
             
-        # 1. Preparamos los pares [Query, Documento]
+        # 1. Preparamos los pares
         pairs = [[query, doc.page_content] for doc in docs]
         
-        # 2. Obtenemos las puntuaciones (scores)
+        # 2. Obtenemos las puntuaciones
         scores = self.reranker.predict(pairs)
         
         # 3. Ordenamos de mayor a menor puntuación
