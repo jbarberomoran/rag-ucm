@@ -30,3 +30,6 @@ Thumbs.db
 # Solo queremos subir el CSV final limpio, no los backups sucios
 /results/backup_resultados.csv
 /results/resultados_parciales.csv
+
+# --- 7. COPIAS DE SEGURIDAD LOCALES ---
+backups/
