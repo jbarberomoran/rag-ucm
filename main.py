@@ -1,97 +1,83 @@
+"""Command-line entry point for reproducible RAG experiments."""
+
+from __future__ import annotations
+
+import argparse
 import os
-import sys
-from dotenv import load_dotenv
+import re
+from pathlib import Path
+
 import pandas as pd
-from src.evaluation import generate_dashboard, evaluate_results
-from src.launcher import setup_enviroment
+from dotenv import load_dotenv
+
+from src.config import RESULTS_DIR, SUPPORTED_METHODS
+from src.evaluation import evaluate_results, generate_dashboard
+from src.launcher import setup_environment
 from src.queries import run_questions
 
-#Ejecutar python main.py
-#En caso de querer guardar los resultados de la ejecucion de antemano: pyhton main.py nombre_carpeta o bien "Nombre carpeta"
-
-# Cargar clave API
-load_dotenv()
-API_KEY = os.getenv("GOOGLE_API_KEY")
-
-def build_paths(base_dir):
-    """Genera las rutas de salida según carpeta seleccionada."""
-    final_file = os.path.join(base_dir, "resultados_finales.csv")
-    return final_file, "./results/resultados_parciales.csv"
-
-def multiple_runs(n = 10):
-    print("\n🧪 INICIANDO MUESTREO RAG UCM...")
-    
-    #miramos si queremos resultados persistentes o no
-    if len(sys.argv) > 1:
-        test_name = sys.argv[1]
-        results_dir = f"./results/persistent_results/{test_name}"
-        clear_results = False
-        print(f"📁 Modo PERSISTENTE: {results_dir}")
-    else:
-        results_dir = "./results/local_results"
-        clear_results = True
-        print(f"📁 Modo LOCAL: {results_dir}")
-
-    # Crear carpeta si no existe
-    os.makedirs(results_dir, exist_ok=True)
-
-    FINAL_FILE, PARTIAL_FILE = build_paths(results_dir)
-
-    # --- Cargado de datos
-    setup_enviroment(False, clear_results, results_dir)
-
-    # --- Preguntas - cambiar el primero a None para ejecutarlo entero y lista no vacia para pruebas
-    all_results = []
+RESULT_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
 
-    for i in range(n):
-        df = run_questions(None, None, API_KEY, PARTIAL_FILE)
-        all_results.append(df)
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--name", help="Store results under results/persistent_results/NAME")
+    parser.add_argument("--runs", type=int, default=1, help="Number of repeated runs")
+    parser.add_argument("--questions", type=int, nargs="*", help="Zero-based question indices")
+    parser.add_argument(
+        "--methods", nargs="+", choices=SUPPORTED_METHODS, default=list(SUPPORTED_METHODS)
+    )
+    parser.add_argument("--sleep", type=float, default=0.2, help="Delay between API calls")
+    parser.add_argument("--rebuild-db", action="store_true")
+    parser.add_argument("--keep-existing", action="store_true")
+    parser.add_argument("--skip-plots", action="store_true")
+    return parser.parse_args()
 
-    df_all = pd.concat(all_results, ignore_index=True)
 
-    # Guardar resultados finales acumulados
-    os.makedirs(os.path.dirname(FINAL_FILE), exist_ok=True)
-    df_all.to_csv(FINAL_FILE, index=False)
+def run_experiment(args: argparse.Namespace) -> Path:
+    if args.runs < 1:
+        raise ValueError("--runs must be at least 1")
 
-    # --- Evaluación y dashboard
-    evaluate_results(df_all, FINAL_FILE)
-    generate_dashboard(dir_input= FINAL_FILE, dir_output=os.path.join(results_dir, "plots"))
+    load_dotenv()
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        raise RuntimeError("GOOGLE_API_KEY is missing; copy .env.example to .env")
 
-def main():
-    print("\n🧪 INICIANDO QUERY UCM...")
+    if args.name and not RESULT_NAME_PATTERN.fullmatch(args.name):
+        raise ValueError("--name may contain only letters, numbers, dots, dashes, and underscores")
 
-    #miramos si queremos resultados persistentes o no
-    if len(sys.argv) > 1:
-        test_name = sys.argv[1]
-        results_dir = f"./results/persistent_results/{test_name}"
-        clear_results = False
-        print(f"📁 Modo PERSISTENTE: {results_dir}")
-    else:
-        results_dir = "./results/local_results"
-        clear_results = True
-        print(f"📁 Modo LOCAL: {results_dir}")
+    results_dir = (
+        RESULTS_DIR / "persistent_results" / args.name
+        if args.name
+        else RESULTS_DIR / "local_results"
+    )
+    final_file = results_dir / "resultados_finales.csv"
+    partial_file = RESULTS_DIR / "resultados_parciales.csv"
+    setup_environment(args.rebuild_db, not args.keep_existing, results_dir)
 
-    # Crear carpeta si no existe
-    os.makedirs(results_dir, exist_ok=True)
+    runs = []
+    for run_id in range(1, args.runs + 1):
+        frame = run_questions(
+            args.questions,
+            args.methods,
+            api_key,
+            partial_file,
+            args.sleep,
+        )
+        frame.insert(0, "run_id", run_id)
+        runs.append(frame)
 
-    FINAL_FILE, PARTIAL_FILE = build_paths(results_dir)
+    combined = pd.concat(runs, ignore_index=True)
+    results_dir.mkdir(parents=True, exist_ok=True)
+    combined.to_csv(final_file, index=False)
+    evaluate_results(combined, str(final_file))
+    if not args.skip_plots:
+        generate_dashboard(str(final_file), str(results_dir / "plots"))
+    return final_file
 
-    # --- Cargado de datos - no se vuelve a crear la bd y borra resultados anteriores
-    setup_enviroment(None, clear_results, results_dir)
 
-    # --- Preguntas - cambiar el primero a None para ejecutarlo entero y lista no vacia para pruebas
-    #df = run_questions(range(0,3), None, API_KEY, PARTIAL_FILE)
-    df = run_questions(None, None, API_KEY, PARTIAL_FILE)
+def main() -> None:
+    run_experiment(parse_args())
 
-    # --- Exportar Resultados y Resumen
-    df.to_csv(FINAL_FILE, index=False)
-
-    evaluate_results(df, FINAL_FILE)
-    generate_dashboard(dir_input= FINAL_FILE, dir_output=os.path.join(results_dir, "plots"))
 
 if __name__ == "__main__":
-    multiple_runs()
-
-#Ejecutar python main.py
-#En caso de querer guardar los resultados de la ejecucion de antemano: pyhton main.py nombre_carpeta o bien "Nombre carpeta"
+    main()

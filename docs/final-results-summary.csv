@@ -1,0 +1,6 @@
+method,samples,accuracy_pct,mean_latency_s,mean_retrieval_score
+baseline,821,65.77,0.5589,0.0
+bm25,821,97.32,0.6429,0.6263
+cross_encoder,819,98.53,2.6402,0.6256
+dense,821,87.58,0.6580,0.3878
+hybrid,820,97.32,0.7118,0.6484

@@ -1,7 +1,9 @@
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 import os
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+
 
 def evaluate_results(df : pd.DataFrame, ff  : str):
     print("\n" + "="*30)
@@ -34,7 +36,8 @@ def setup_plot_style():
 
 def clean_emojis(text):
     """Elimina emojis para evitar warnings de fuentes en Windows."""
-    if not isinstance(text, str): return text
+    if not isinstance(text, str):
+        return text
     # Eliminamos caracteres no ASCII (emojis suelen serlo) o limpiamos chars específicos
     # Forma simple: Reemplazo directo de los que usas
     text = text.replace("✅", "").replace("⚠️", "").replace("📉", "").replace("❌", "")
@@ -89,9 +92,11 @@ def plot_rag_quality(df, dir_output : str):
     """
     Gráfico 2: Calidad del RAG en PORCENTAJE (%)
     """
-    if "status" not in df.columns: return
+    if "status" not in df.columns:
+        return
 
     # 1. Limpiamos emojis de la columna status para evitar warnings de fuente
+    df = df.copy()
     df["status_clean"] = df["status"].apply(clean_emojis)
 
     plt.figure(figsize=(12, 7))
@@ -235,4 +240,7 @@ def generate_dashboard(dir_input, dir_output : str):
             traceback.print_exc()
 
 if __name__ == "__main__":
-    generate_dashboard("results/persistent_results/resultados_definitivos/resultados_finales.csv", "results/persistent_results/resultados_definitivos/plots")
+    generate_dashboard(
+        "results/persistent_results/resultados_definitivos/resultados_finales.csv",
+        "results/persistent_results/resultados_definitivos/plots",
+    )
