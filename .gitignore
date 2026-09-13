@@ -4,10 +4,16 @@
 key.env
 
 # --- 2. BASURA DE PYTHON ---
+.venv/
+.python/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
 # --- 3. DATOS PESADOS O GENERADOS ---
 # La base de datos vectorial se regenera con el código, no se sube (pesa mucho)
@@ -26,10 +32,9 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# --- 6. RESULTADOS TEMPORALES ---
-# Solo queremos subir el CSV final limpio, no los backups sucios
-/results/backup_resultados.csv
-/results/resultados_parciales.csv
+# --- 6. RESULTADOS GENERADOS ---
+# Los resultados se regeneran con main.py. Las métricas finales resumidas viven en docs/.
+/results/
 
 # --- 7. COPIAS DE SEGURIDAD LOCALES ---
 backups/

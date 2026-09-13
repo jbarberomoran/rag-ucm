@@ -1,0 +1,4 @@
+-r requirements.txt
+
+jupyter>=1,<2
+ipykernel>=6,<8

@@ -1,19 +1,17 @@
 import gc
 import warnings
 
-from langchain_community.vectorstores import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.retrievers import BM25Retriever
 from langchain.retrievers import EnsembleRetriever
+from langchain_community.retrievers import BM25Retriever
+from langchain_community.vectorstores import Chroma
 from langchain_core.documents import Document
+from langchain_huggingface import HuggingFaceEmbeddings
 from sentence_transformers import CrossEncoder
+
+from src.config import CHROMA_PATH, EMBEDDING_MODEL_NAME, RERANKER_MODEL_NAME
 
 
 # --- CONFIGURACIÓN ---
-CHROMA_PATH = "./data/chroma_db"
-EMBEDDING_MODEL = "all-MiniLM-L6-v2"
-RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
-
 class RetrievalEngine:
     _instance = None
 
@@ -49,16 +47,29 @@ class RetrievalEngine:
         Se conecta solo cuando le pides la DB.
         """
         if self._db is None:
-            self._embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+            self._embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
             warnings.filterwarnings("ignore", category=DeprecationWarning)
-            self._db = Chroma(persist_directory=CHROMA_PATH, embedding_function=self._embeddings)
+            self._db = Chroma(
+                persist_directory=str(CHROMA_PATH), embedding_function=self._embeddings
+            )
         return self._db
 
     def unload_db(self):
         """Método para desconectar manualmente"""
-        if self._db is not None:
-            self._db = None
-            self._embeddings = None
+        had_loaded_resources = any(
+            resource is not None
+            for resource in (
+                self._db,
+                self._embeddings,
+                self._bm25_retriever,
+                self._reranker,
+            )
+        )
+        self._db = None
+        self._embeddings = None
+        self._bm25_retriever = None
+        self._reranker = None
+        if had_loaded_resources:
             gc.collect()
 
     def _get_bm25_retriever(self):
@@ -69,14 +80,17 @@ class RetrievalEngine:
         try:
             # Sacamos todos los documentos de Chroma para crear el índice inverso
             raw_data = self.db.get()
-            texts = raw_data['documents']
-            metadatas = raw_data['metadatas']
+            texts = raw_data["documents"]
+            metadatas = raw_data["metadatas"]
             
             if not texts:
                 print("⚠️  ADVERTENCIA: La base de datos está vacía.")
                 return None
                 
-            docs_obj = [Document(page_content=t, metadata=m) for t, m in zip(texts, metadatas)]
+            docs_obj = [
+                Document(page_content=text, metadata=metadata)
+                for text, metadata in zip(texts, metadatas, strict=True)
+            ]
             
             self._bm25_retriever = BM25Retriever.from_documents(docs_obj)
             return self._bm25_retriever
@@ -94,6 +108,11 @@ class RetrievalEngine:
             k (int): Número de documentos a recuperar
         """
         
+        if method not in {"dense", "bm25", "hybrid"}:
+            raise ValueError(f"Unsupported retrieval method: {method}")
+        if k < 1:
+            raise ValueError("k must be at least 1")
+
         # 1. Retriever Denso (Vectorial) - Siempre disponible desde self.db
         dense_retriever = self.db.as_retriever(search_kwargs={"k": k})
         
@@ -102,6 +121,8 @@ class RetrievalEngine:
             
         # 2. Retriever BM25
         bm25_retriever = self._get_bm25_retriever()
+        if bm25_retriever is None:
+            raise RuntimeError("Cannot build BM25 retriever from an empty vector database")
             
         # Actualizamos K dinámicamente en el objeto cacheado
         bm25_retriever.k = k
@@ -117,14 +138,13 @@ class RetrievalEngine:
                 weights=[0.5, 0.5]
             )
             
-        # Default fallback
-        return dense_retriever
+        raise AssertionError("unreachable")
     
     @property
     def reranker(self):
         """Carga el modelo Cross-Encoder solo si se necesita."""
         if self._reranker is None:
-            self._reranker = CrossEncoder(RERANKER_MODEL)
+            self._reranker = CrossEncoder(RERANKER_MODEL_NAME)
         return self._reranker
 
     # RE-RANKING
@@ -133,7 +153,8 @@ class RetrievalEngine:
         Recibe una lista de documentos candidatos, los puntúa contra la query
         y devuelve los top_k mejores.
         """
-        if not docs: return []
+        if not docs:
+            return []
             
         # 1. Preparamos los pares
         pairs = [[query, doc.page_content] for doc in docs]
@@ -142,8 +163,9 @@ class RetrievalEngine:
         scores = self.reranker.predict(pairs)
         
         # 3. Ordenamos de mayor a menor puntuación
-        docs_with_scores = sorted(zip(docs, scores), key=lambda x: x[1], reverse=True)
+        docs_with_scores = sorted(
+            zip(docs, scores, strict=True), key=lambda item: item[1], reverse=True
+        )
         
         # 4. Devolvemos solo los objetos Document del top_k
-        final_docs = [doc for doc, score in docs_with_scores[:top_k]]
-        return final_docs
+        return [doc for doc, _score in docs_with_scores[:top_k]]
