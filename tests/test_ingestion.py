@@ -1,3 +1,7 @@
+import json
+
+import pytest
+
 import src.ingestion as ingestion
 
 
@@ -65,6 +69,13 @@ def test_db_setup_skips_existing_database(tmp_path, monkeypatch):
         lambda: (_ for _ in ()).throw(AssertionError("must not rebuild")),
     )
 
+    with pytest.raises(ValueError, match="Index configuration"):
+        ingestion.db_setup(rebuild_db=False)
+    expected = ingestion.index_config(
+        ingestion.PAPER_PATH, ingestion.CHUNKING_METHOD,
+        ingestion.CHUNK_SIZE, ingestion.CHUNK_OVERLAP,
+    )
+    (database_path / "index_manifest.json").write_text(json.dumps(expected))
     assert ingestion.db_setup(rebuild_db=False) is None
 
 

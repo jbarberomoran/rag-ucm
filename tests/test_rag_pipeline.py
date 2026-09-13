@@ -64,7 +64,8 @@ def test_baseline_does_not_load_retrieval_engine():
 
     assert answer == "B"
     assert documents == []
-    assert "NO CONTEXT AVAILABLE" in llm.prompts[0]
+    assert "using your internal knowledge" in llm.prompts[0]
+    assert "ONLY on the provided context" not in llm.prompts[0]
 
 
 def test_dense_retrieval_adds_document_context():

@@ -14,7 +14,8 @@ technical research paper.
 - `cross_encoder`: hybrid candidate retrieval followed by reranking.
 
 Answer correctness and retrieval evidence are measured separately. This avoids
-treating a correct answer without supporting context as a successful RAG result.
+confusing answer-key agreement with lexical reference overlap. Neither metric
+alone establishes whether the model used the context. See [evaluation protocol](docs/evaluation.md).
 
 ## Repository layout
 
@@ -82,6 +83,7 @@ Unit tests do not use the network, API keys, Chroma, or downloaded ML models.
 python -m pytest
 python -m pytest --cov=src --cov-report=term-missing
 python -m ruff check .
+python -m pytest integration_tests
 ```
 
 GitHub Actions runs linting and unit tests for pushes to `main` and for pull
@@ -105,11 +107,21 @@ Repeat the experiment and keep it under a named result directory:
 
 ```bash
 python main.py --name final-comparison --runs 10
+python main.py --name final-comparison --runs 10 --resume
 ```
 
 Use `python main.py --help` for every option. The default is one run; this
 prevents an accidental invocation from making ten full batches of paid API
 calls, which was the previous behavior.
+
+Existing experiment directories require `--resume` or a new `--name`.
+`--keep-existing` is a compatibility alias for resume. Each experiment has its
+own attempt log, manifest and paired statistics. `--chunking recursive` selects
+recursive splitting; incompatible existing indexes require `--rebuild-db`.
+Optional `--annotations PATH` enables metrics against human-labeled chunk IDs.
+The notebook now analyzes saved runs or displays the historical summary when no
+run exists, without requiring an API key. Historical results predate the fixes
+and are not evidence that the corrected pipeline achieves the same accuracy.
 
 ## Data and reproducibility
 

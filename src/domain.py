@@ -56,12 +56,30 @@ def verify_evidence(
 def classify_result(is_correct: bool, found_evidence: bool) -> str:
     """Classify answer correctness independently from retrieval evidence."""
     statuses = {
-        (True, True): "✅ ACIERTO PERFECTO (RAG)",
-        (True, False): "⚠️ ACIERTO SUERTE (Sin Evidencia)",
-        (False, True): "📉 FALLO RAZONAMIENTO (Contexto OK)",
-        (False, False): "❌ FALLO TOTAL",
+        (True, True): "Correct / reference overlap detected",
+        (True, False): "Correct / reference overlap not detected",
+        (False, True): "Incorrect / reference overlap detected",
+        (False, False): "Incorrect / reference overlap not detected",
     }
     return statuses[(is_correct, found_evidence)]
+
+
+def score_retrieval(documents, relevant_chunk_ids):
+    """Score ranked chunk IDs against optional human relevance annotations.
+
+    Missing annotations yield no metrics, never an assumed negative label.
+    """
+    if not relevant_chunk_ids:
+        return {"recall_at_k": None, "precision_at_k": None, "reciprocal_rank": None}
+    relevant = set(relevant_chunk_ids)
+    ranked = list(dict.fromkeys(doc.metadata.get("chunk_id") for doc in documents))
+    hits = relevant.intersection(ranked)
+    first = next((i for i, value in enumerate(ranked, 1) if value in relevant), None)
+    return {
+        "recall_at_k": len(hits) / len(relevant),
+        "precision_at_k": len(hits) / len(ranked) if ranked else 0.0,
+        "reciprocal_rank": 1 / first if first else 0.0,
+    }
 
 
 def serialize_documents(documents: Iterable[DocumentLike]) -> list[dict[str, Any]]:

@@ -36,6 +36,17 @@ PROMPT = PromptTemplate(
     input_variables=["context", "question", "option_a", "option_b", "option_c", "option_d"],
 )
 
+BASELINE_PROMPT = PromptTemplate.from_template("""
+Answer this multiple-choice question using your internal knowledge.
+QUESTION: {question}
+OPTIONS:
+A. {option_a}
+B. {option_b}
+C. {option_c}
+D. {option_d}
+Output ONLY the single correct letter (A, B, C, or D), without explanation.
+""")
+
 
 def query_rag(question, options, method, api_key, *, engine=None, llm_factory=None):
     """Answer one multiple-choice question with the selected retrieval method."""
@@ -64,7 +75,8 @@ def query_rag(question, options, method, api_key, *, engine=None, llm_factory=No
 
     factory = llm_factory or ChatGoogleGenerativeAI
     llm = factory(model=MODEL_NAME, google_api_key=api_key, temperature=0)
-    formatted_prompt = PROMPT.format(
+    prompt = BASELINE_PROMPT if method == "baseline" else PROMPT
+    formatted_prompt = prompt.format(
         context=context_text,
         question=question,
         option_a=options["A"],

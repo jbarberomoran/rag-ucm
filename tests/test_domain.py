@@ -58,10 +58,10 @@ def test_verify_evidence_rejects_invalid_threshold(threshold):
 @pytest.mark.parametrize(
     ("correct", "evidence", "expected"),
     [
-        (True, True, "✅ ACIERTO PERFECTO (RAG)"),
-        (True, False, "⚠️ ACIERTO SUERTE (Sin Evidencia)"),
-        (False, True, "📉 FALLO RAZONAMIENTO (Contexto OK)"),
-        (False, False, "❌ FALLO TOTAL"),
+        (True, True, "Correct / reference overlap detected"),
+        (True, False, "Correct / reference overlap not detected"),
+        (False, True, "Incorrect / reference overlap detected"),
+        (False, False, "Incorrect / reference overlap not detected"),
     ],
 )
 def test_classify_result_covers_all_outcomes(correct, evidence, expected):
