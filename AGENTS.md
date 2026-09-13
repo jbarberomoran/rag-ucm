@@ -13,7 +13,8 @@ between retrieval quality and answer quality.
   experiment outputs.
 - Keep ingestion, retrieval, generation, orchestration, and evaluation concerns
   separated.
-- Keep calls to Gemini and model downloads outside unit tests; use test doubles.
+- Keep generation requests and model downloads outside unit tests; use test doubles.
+- Ollama is the default generation provider; cloud providers must remain optional.
 - Do not delete research inputs or final academic artifacts without explaining
   why they are redundant and confirming that Git history preserves them.
 

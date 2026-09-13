@@ -3,30 +3,31 @@
 from __future__ import annotations
 
 import argparse
-import os
 import sys
 
 from dotenv import load_dotenv
 
 from src.config import QUESTIONS_PATH
+from src.generation import create_generator, resolve_settings
 from src.question_data import load_questions
 
 
-def check_api(api_key: str) -> None:
-    from langchain_google_genai import ChatGoogleGenerativeAI
-
-    model = ChatGoogleGenerativeAI(
-        model="models/gemini-2.5-flash-lite",
-        google_api_key=api_key,
-        temperature=0,
-    )
-    response = model.invoke("Reply with exactly: OK")
-    print(f"Gemini response: {response.content}")
+def check_generation(settings) -> None:
+    generator = create_generator(settings)
+    print(f"Model identity: {generator.identity()}")
+    response = generator.invoke("Reply with exactly: OK")
+    print(f"{settings.provider}/{settings.model} response: {response.content}")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check-api", action="store_true", help="Make one Gemini API call")
+    parser.add_argument(
+        "--check-generation", "--check-api", dest="check_generation", action="store_true",
+        help="Make one request to the selected generation provider",
+    )
+    parser.add_argument("--provider", choices=["ollama", "gemini"])
+    parser.add_argument("--model")
+    parser.add_argument("--base-url")
     args = parser.parse_args()
 
     load_dotenv()
@@ -37,12 +38,10 @@ def main() -> None:
     questions = load_questions(QUESTIONS_PATH)
     print(f"Question dataset: {len(questions)} valid questions")
 
-    api_key = os.getenv("GOOGLE_API_KEY")
-    print(f"GOOGLE_API_KEY: {'configured' if api_key else 'missing'}")
-    if args.check_api:
-        if not api_key:
-            raise SystemExit("GOOGLE_API_KEY is required for --check-api")
-        check_api(api_key)
+    settings = resolve_settings(args)
+    print(f"Generation provider: {settings.provider}; model: {settings.model}")
+    if args.check_generation:
+        check_generation(settings)
 
 
 if __name__ == "__main__":

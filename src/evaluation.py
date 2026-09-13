@@ -21,6 +21,8 @@ def load_data(dir_input : str):
         return None
     
     df = pd.read_csv(dir_input)
+    if "error" in df:
+        df = df[df["error"].fillna("") == ""].copy()
     
     # Aseguramos que 'correct' sea numérico (1/0) para calcular porcentajes
     # En tu main lo guardas como booleano o int, esto lo estandariza
@@ -110,10 +112,10 @@ def plot_rag_quality(df, dir_output : str):
 
     # 3. Mapeo de colores (usando los nombres SIN emojis)
     status_palette = {
-        "ACIERTO PERFECTO (RAG)": "#2ecc71",           # Verde
-        "ACIERTO SUERTE (Sin Evidencia)": "#f1c40f",  # Amarillo
-        "FALLO RAZONAMIENTO (Contexto OK)": "#e67e22",# Naranja
-        "FALLO TOTAL": "#e74c3c"                       # Rojo
+        "Correct / reference overlap detected": "#2ecc71",
+        "Correct / reference overlap not detected": "#f1c40f",
+        "Incorrect / reference overlap detected": "#e67e22",
+        "Incorrect / reference overlap not detected": "#e74c3c",
     }
     
     # Asegurar que la paleta cubra todo lo que hay en los datos
@@ -140,7 +142,7 @@ def plot_rag_quality(df, dir_output : str):
                              fontsize=9, color='black', xytext=(0, 3),
                              textcoords='offset points')
 
-    plt.title("Diagnóstico de Calidad RAG (Porcentajes Relativos)", fontsize=14, fontweight='bold')
+    plt.title("Answer correctness and reference overlap", fontsize=14, fontweight='bold')
     plt.ylabel("Porcentaje del Total (%)")
     plt.xlabel("Método")
     plt.legend(title="Diagnóstico", bbox_to_anchor=(1.01, 1), loc='upper left')
@@ -189,6 +191,9 @@ def plot_retrieval_score(df, dir_output : str):
     if "retrieval_score" not in df.columns:
         print("⚠️ Columna 'retrieval_score' no encontrada. Saltando gráfico de fidelidad.")
         return
+    df = df[df["method"] != "baseline"]
+    if df.empty:
+        return
 
     plt.figure(figsize=(10, 6))
     
@@ -203,8 +208,8 @@ def plot_retrieval_score(df, dir_output : str):
         legend=False
     )
     
-    plt.title("Fidelidad de Recuperación (Similitud con Ground Truth)", fontsize=14)
-    plt.ylabel("Puntuación de Similitud (0-1)")
+    plt.title("Reference text overlap (not faithfulness)", fontsize=14)
+    plt.ylabel("Longest matching span / reference length (0–1)")
     plt.xlabel("Método")
     plt.ylim(-0.1, 1.1) # Márgenes para ver bien los extremos
     

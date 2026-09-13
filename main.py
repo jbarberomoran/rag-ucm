@@ -3,17 +3,19 @@
 from __future__ import annotations
 
 import argparse
-import os
 import re
 from pathlib import Path
 
 import pandas as pd
 from dotenv import load_dotenv
 
-from src.config import RESULTS_DIR, SUPPORTED_METHODS
+from src.config import CHROMA_PATH, PAPER_PATH, QUESTIONS_PATH, RESULTS_DIR, SUPPORTED_METHODS
 from src.evaluation import evaluate_results, generate_dashboard
-from src.launcher import setup_environment
+from src.generation import create_generator, resolve_settings
+from src.ingestion import db_setup
+from src.provenance import experiment_config, load_annotations, prepare_manifest, save_json
 from src.queries import run_questions
+from src.statistics import paired_report
 
 RESULT_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
@@ -29,18 +31,30 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sleep", type=float, default=0.2, help="Delay between API calls")
     parser.add_argument("--rebuild-db", action="store_true")
     parser.add_argument("--keep-existing", action="store_true")
+    parser.add_argument("--resume", action="store_true", help="Retry incomplete observations")
+    parser.add_argument("--chunking", choices=["recursive", "semantic"], default="semantic")
+    parser.add_argument("--annotations", type=Path, help="Optional question-to-chunk-ID JSON")
     parser.add_argument("--skip-plots", action="store_true")
+    parser.add_argument("--provider", choices=["ollama", "gemini"])
+    parser.add_argument("--model", help="Generation model name (provider-specific)")
+    parser.add_argument("--base-url", help="Ollama server URL")
+    parser.add_argument("--timeout", type=float, help="Generation request timeout in seconds")
+    parser.add_argument("--context-tokens", type=int, help="Ollama context window")
+    parser.add_argument("--max-tokens", type=int, help="Maximum generated tokens")
     return parser.parse_args()
 
 
 def run_experiment(args: argparse.Namespace) -> Path:
     if args.runs < 1:
         raise ValueError("--runs must be at least 1")
+    if args.sleep < 0:
+        raise ValueError("--sleep must be non-negative")
+    if len(set(args.methods)) != len(args.methods):
+        raise ValueError("--methods must not contain duplicates")
 
     load_dotenv()
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        raise RuntimeError("GOOGLE_API_KEY is missing; copy .env.example to .env")
+    settings = resolve_settings(args)
+    generator = create_generator(settings)
 
     if args.name and not RESULT_NAME_PATTERN.fullmatch(args.name):
         raise ValueError("--name may contain only letters, numbers, dots, dashes, and underscores")
@@ -51,26 +65,47 @@ def run_experiment(args: argparse.Namespace) -> Path:
         else RESULTS_DIR / "local_results"
     )
     final_file = results_dir / "resultados_finales.csv"
-    partial_file = RESULTS_DIR / "resultados_parciales.csv"
-    setup_environment(args.rebuild_db, not args.keep_existing, results_dir)
+    partial_file = results_dir / "resultados_parciales.csv"
+    resume = args.resume or args.keep_existing
+    if results_dir.exists() and any(results_dir.iterdir()) and not resume:
+        raise ValueError("Experiment directory is not empty; choose --name or use --resume")
+    results_dir.mkdir(parents=True, exist_ok=True)
+    config = experiment_config(args, QUESTIONS_PATH, PAPER_PATH)
+    config["generation_identity"] = generator.identity()
+    prepare_manifest(results_dir / "manifest.json", config, resume)
+    if any(method != "baseline" for method in args.methods):
+        db_setup(args.rebuild_db, args.chunking)
+    annotations = load_annotations(args.annotations, CHROMA_PATH / "chunks.json", QUESTIONS_PATH)
 
-    runs = []
     for run_id in range(1, args.runs + 1):
-        frame = run_questions(
+        run_questions(
             args.questions,
             args.methods,
-            api_key,
+            settings.api_key,
             partial_file,
             args.sleep,
+            run_id=run_id,
+            resume=resume,
+            annotations=annotations,
+            generator=generator,
+            generation_settings=settings,
         )
-        frame.insert(0, "run_id", run_id)
-        runs.append(frame)
 
-    combined = pd.concat(runs, ignore_index=True)
+    if not partial_file.exists():
+        raise ValueError("No questions selected; no observations produced")
+    combined = pd.read_csv(partial_file).drop_duplicates(
+        ["run_id", "question_id", "method"], keep="last"
+    )
+    combined["correct"] = combined["correct"].map(
+        lambda value: {"True": 1.0, "False": 0.0}.get(str(value), value)
+    )
+    combined["correct"] = pd.to_numeric(combined["correct"], errors="raise")
     results_dir.mkdir(parents=True, exist_ok=True)
     combined.to_csv(final_file, index=False)
-    evaluate_results(combined, str(final_file))
-    if not args.skip_plots:
+    save_json(results_dir / "paired_statistics.json", paired_report(combined))
+    successful = combined[combined["error"].fillna("") == ""]
+    evaluate_results(successful, str(final_file))
+    if not args.skip_plots and not successful.empty:
         generate_dashboard(str(final_file), str(results_dir / "plots"))
     return final_file
 

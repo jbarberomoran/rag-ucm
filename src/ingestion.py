@@ -1,4 +1,6 @@
 import gc
+import hashlib
+import json
 import shutil
 
 from langchain_community.document_loaders import PyPDFLoader
@@ -8,6 +10,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from src.config import CHROMA_PATH, EMBEDDING_MODEL_NAME, PAPER_PATH
+from src.provenance import index_config, save_json
 from src.retrieval import RetrievalEngine
 
 # --- CONFIGURACIÓN ---
@@ -61,6 +64,10 @@ def ingest_data(chunking_method=CHUNKING_METHOD):
 
     print("✂️ Procesando fragmentos")
     chunks = splitter.split_documents(docs)
+    for index, chunk in enumerate(chunks):
+        chunk.metadata["chunk_id"] = hashlib.sha256(
+            f"{index}:{chunk.metadata.get('page')}:{chunk.page_content}".encode()
+        ).hexdigest()
 
     print(f"   -> Generados {len(chunks)} fragmentos.")
 
@@ -81,6 +88,10 @@ def create_vector_db(chunks):
         embedding=embeddings,
         persist_directory=str(CHROMA_PATH),
     )
+    save_json(CHROMA_PATH / "chunks.json", [
+        {"chunk_id": chunk.metadata["chunk_id"], "page": chunk.metadata.get("page"),
+         "text": chunk.page_content} for chunk in chunks
+    ])
     print("💾 Base de datos guardada exitosamente.")
 
 
@@ -102,9 +113,13 @@ def clear_existing_db():
 
 # --- ENTRY POINT ---
 def db_setup(rebuild_db: bool = False, chunking_method=CHUNKING_METHOD):
+    expected = index_config(PAPER_PATH, chunking_method, CHUNK_SIZE, CHUNK_OVERLAP)
+    manifest_path = CHROMA_PATH / "index_manifest.json"
     db_exists = CHROMA_PATH.is_dir() and any(CHROMA_PATH.iterdir())
 
     if not rebuild_db and db_exists:
+        if not manifest_path.exists() or json.loads(manifest_path.read_text()) != expected:
+            raise ValueError("Index configuration changed or is unknown; use --rebuild-db")
         print("\n⏩ Base de datos encontrada. Saltando ingesta.")
         return
 
@@ -115,7 +130,11 @@ def db_setup(rebuild_db: bool = False, chunking_method=CHUNKING_METHOD):
         raise RuntimeError("\nNo se pudo limpiar la base de datos antigua.")
 
     chunks = ingest_data(chunking_method)
+    if not chunks:
+        raise ValueError("No chunks extracted; index was not created")
     create_vector_db(chunks)
+    CHROMA_PATH.mkdir(parents=True, exist_ok=True)
+    save_json(manifest_path, expected)
     print("✅ Setup completado.")
 
 

@@ -10,7 +10,13 @@ from pathlib import Path
 import pandas as pd
 
 from src.config import QUESTIONS_PATH, SUPPORTED_METHODS
-from src.domain import classify_result, extract_answer, serialize_documents, verify_evidence
+from src.domain import (
+    classify_result,
+    extract_answer,
+    score_retrieval,
+    serialize_documents,
+    verify_evidence,
+)
 from src.question_data import load_questions, select_questions
 from src.rag_pipeline import query_rag
 from src.retrieval import RetrievalEngine
@@ -44,6 +50,11 @@ def run_questions(
     questions_path: str | Path = QUESTIONS_PATH,
     query_fn: Callable = query_rag,
     engine=None,
+    run_id: int = 1,
+    resume: bool = False,
+    annotations: dict | None = None,
+    generator=None,
+    generation_settings=None,
 ) -> pd.DataFrame:
     """Run selected questions and persist a transparent row per experiment."""
     selected_methods = _validate_methods(methods or SUPPORTED_METHODS)
@@ -55,13 +66,29 @@ def run_questions(
     output_path = Path(partial_file)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     results = []
+    completed = set()
+    if resume and output_path.exists():
+        previous = pd.read_csv(output_path)
+        successful = previous[previous["error"].fillna("") == ""]
+        completed = set(zip(
+            successful.run_id, successful.question_id, successful.method, strict=True
+        ))
 
     for question_id, question in question_records:
         for method in selected_methods:
+            if (run_id, question_id, method) in completed:
+                continue
             start = time.perf_counter()
-            raw_answer, retrieved_docs = query_fn(
-                question["question"], question["answers"], method, api_key
-            )
+            error = ""
+            try:
+                raw_answer, retrieved_docs = query_fn(
+                    question["question"], question["answers"], method, api_key,
+                    **({"generator": generator, "settings": generation_settings, "engine": engine}
+                       if query_fn is query_rag else {}),
+                )
+            except Exception as exc:
+                # Store only the exception class; provider messages can contain secrets.
+                raw_answer, retrieved_docs, error = "", [], type(exc).__name__
             latency = time.perf_counter() - start
             if sleep_time:
                 time.sleep(sleep_time)
@@ -72,19 +99,29 @@ def run_questions(
                 retrieved_docs, question.get("paper_reference", "")
             )
             row = {
+                "run_id": run_id,
+                "provider": generation_settings.provider if generation_settings else "injected",
+                "model": generation_settings.model if generation_settings else "injected",
                 "question_id": question_id,
                 "method": method,
-                "correct": is_correct,
+                "correct": is_correct if not error else None,
+                "error": error,
                 "predicted": predicted,
                 "ground_truth": question["correct_answer"],
                 "response_time": round(latency, 4),
                 "raw_output": raw_answer,
-                "status": classify_result(is_correct, found_evidence),
+                "status": (
+                    "Request failed" if error else classify_result(is_correct, found_evidence)
+                ),
+                "reference_overlap": evidence_score if method != "baseline" else None,
                 "retrieval_score": evidence_score,
                 "retrieved_docs": json.dumps(
                     serialize_documents(retrieved_docs), ensure_ascii=False
                 ),
             }
+            row.update(score_retrieval(
+                retrieved_docs, (annotations or {}).get(str(question_id), [])
+            ) if method != "baseline" and not error else score_retrieval([], []))
             results.append(row)
             pd.DataFrame([row]).to_csv(
                 output_path,
