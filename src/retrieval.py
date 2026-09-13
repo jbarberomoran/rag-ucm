@@ -8,7 +8,13 @@ from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
 from sentence_transformers import CrossEncoder
 
-from src.config import CHROMA_PATH, EMBEDDING_MODEL_NAME, RERANKER_MODEL_NAME
+from src.config import (
+    CHROMA_PATH,
+    EMBEDDING_MODEL_NAME,
+    EMBEDDING_REVISION,
+    RERANKER_MODEL_NAME,
+    RERANKER_REVISION,
+)
 
 
 # --- CONFIGURACIÓN ---
@@ -47,7 +53,9 @@ class RetrievalEngine:
         Se conecta solo cuando le pides la DB.
         """
         if self._db is None:
-            self._embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
+            self._embeddings = HuggingFaceEmbeddings(
+                model_name=EMBEDDING_MODEL_NAME, model_kwargs={"revision": EMBEDDING_REVISION}
+            )
             warnings.filterwarnings("ignore", category=DeprecationWarning)
             self._db = Chroma(
                 persist_directory=str(CHROMA_PATH), embedding_function=self._embeddings
@@ -144,7 +152,7 @@ class RetrievalEngine:
     def reranker(self):
         """Carga el modelo Cross-Encoder solo si se necesita."""
         if self._reranker is None:
-            self._reranker = CrossEncoder(RERANKER_MODEL_NAME)
+            self._reranker = CrossEncoder(RERANKER_MODEL_NAME, revision=RERANKER_REVISION)
         return self._reranker
 
     # RE-RANKING

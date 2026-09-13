@@ -1,5 +1,8 @@
 # Local generation validation
 
+Historical smoke: this predates dataset rebalancing and token-budget fixes.
+It is retained for provenance, not as validation of the current benchmark.
+
 The default generation path was exercised with Qwen3 4B Instruct on an Apple
 Silicon machine with 24 GiB RAM, without a Google API key or cloud generation.
 
@@ -31,4 +34,3 @@ the same configuration. Model downloads and generated results stay outside Git.
 Automated checks: 79 offline unit tests (86.46% src coverage), one real Chroma
 storage integration test, and Ruff. Provider transport is mocked in unit tests;
 the above smoke test used the real local server and model.
-

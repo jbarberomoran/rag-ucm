@@ -7,7 +7,7 @@ import seaborn as sns
 
 def evaluate_results(df : pd.DataFrame, ff  : str):
     print("\n" + "="*30)
-    print("📊 RESUMEN DE PRECISIÓN (ACCURACY)")
+    print("📊 ACCURACY ENTRE RESPUESTAS VÁLIDAS (véase summary.json para todos los intentos)")
     print("="*30)
     # Calcula el porcentaje de aciertos por método
     print(df.groupby("method")["correct"].mean() * 100)

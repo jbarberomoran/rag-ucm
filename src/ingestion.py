@@ -9,7 +9,7 @@ from langchain_experimental.text_splitter import SemanticChunker
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from src.config import CHROMA_PATH, EMBEDDING_MODEL_NAME, PAPER_PATH
+from src.config import CHROMA_PATH, EMBEDDING_MODEL_NAME, EMBEDDING_REVISION, PAPER_PATH
 from src.provenance import index_config, save_json
 from src.retrieval import RetrievalEngine
 
@@ -58,7 +58,9 @@ def ingest_data(chunking_method=CHUNKING_METHOD):
     docs = loader.load()
     print(f"   -> PDF cargado: {len(docs)} páginas.")
 
-    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
+    embeddings = HuggingFaceEmbeddings(
+        model_name=EMBEDDING_MODEL_NAME, model_kwargs={"revision": EMBEDDING_REVISION}
+    )
 
     splitter = get_text_splitter(chunking_method, embeddings)
 
@@ -81,7 +83,9 @@ def create_vector_db(chunks):
 
     print("🧠 Guardando vectores en disco...")
     # Volvemos a instanciar embeddings (ligero) para Chroma
-    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
+    embeddings = HuggingFaceEmbeddings(
+        model_name=EMBEDDING_MODEL_NAME, model_kwargs={"revision": EMBEDDING_REVISION}
+    )
     
     Chroma.from_documents(
         documents=chunks,

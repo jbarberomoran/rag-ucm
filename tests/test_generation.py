@@ -18,6 +18,19 @@ def response(value):
     return io.BytesIO(json.dumps(value).encode())
 
 
+class FakeTokenizer:
+    def encode(self, text, **kwargs):
+        return list(text)
+
+    def apply_chat_template(self, messages, **kwargs):
+        return messages[0]["content"]
+
+
+@pytest.fixture(autouse=True)
+def no_tokenizer_downloads(monkeypatch):
+    monkeypatch.setattr(OllamaGenerator, "tokenizer", property(lambda self: FakeTokenizer()))
+
+
 def test_local_is_default_without_google_credentials(monkeypatch):
     for name in ("LLM_PROVIDER", "LLM_MODEL", "GOOGLE_API_KEY"):
         monkeypatch.delenv(name, raising=False)
@@ -54,14 +67,14 @@ def test_ollama_request_returns_text_and_pins_generation_parameters():
     requests = []
     def opener(request, timeout):
         requests.append((request, timeout))
-        return response({"message": {"content": " B "}, "done_reason": "stop"})
+        return response({"response": " B ", "done_reason": "stop", "prompt_eval_count": 8})
     client = OllamaGenerator(GenerationSettings(), opener=opener)
     assert client.invoke("question").content == "B"
     request, timeout = requests[0]
     payload = json.loads(request.data)
-    assert request.full_url == "http://127.0.0.1:11434/api/chat"
+    assert request.full_url == "http://127.0.0.1:11434/api/generate"
     assert payload["stream"] is False
-    assert payload["think"] is False
+    assert payload["raw"] is True
     assert payload["options"]["temperature"] == 0
     assert payload["options"]["num_ctx"] == 32768
     assert timeout == 180
@@ -83,8 +96,10 @@ def test_missing_model_gives_actionable_error():
 
 
 @pytest.mark.parametrize("result", [
-    {"message": {"content": ""}}, {"message": {"content": []}},
-    {"message": {"content": "B"}, "done_reason": "length"},
+    {"response": "", "prompt_eval_count": 8},
+    {"response": [], "prompt_eval_count": 8},
+    {"response": "B", "done_reason": "length", "prompt_eval_count": 8},
+    {"response": "B", "prompt_eval_count": 2},
 ])
 def test_malformed_or_truncated_generation_is_not_scored(result):
     client = OllamaGenerator(GenerationSettings(), opener=lambda *a, **k: response(result))

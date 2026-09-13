@@ -1,0 +1,790 @@
+{
+  "schema": 1,
+  "original_content_sha256": "029d70883675bcfd3c9ef96dab22339eeed67e1f398e52b5b0c4f9633a41cc06",
+  "seed": 2026,
+  "algorithm": "src.dataset_balance.rebalance",
+  "before": {
+    "C": 64,
+    "B": 5,
+    "D": 1
+  },
+  "after": {
+    "D": 17,
+    "A": 18,
+    "C": 17,
+    "B": 18
+  },
+  "permutations": [
+    {
+      "question_id": 1,
+      "old_correct": "C",
+      "new_correct": "D",
+      "new_to_old": {
+        "A": "D",
+        "B": "A",
+        "C": "B",
+        "D": "C"
+      }
+    },
+    {
+      "question_id": 2,
+      "old_correct": "C",
+      "new_correct": "A",
+      "new_to_old": {
+        "A": "C",
+        "B": "D",
+        "C": "A",
+        "D": "B"
+      }
+    },
+    {
+      "question_id": 3,
+      "old_correct": "B",
+      "new_correct": "D",
+      "new_to_old": {
+        "A": "A",
+        "B": "D",
+        "C": "C",
+        "D": "B"
+      }
+    },
+    {
+      "question_id": 4,
+      "old_correct": "D",
+      "new_correct": "D",
+      "new_to_old": {
+        "A": "C",
+        "B": "A",
+        "C": "B",
+        "D": "D"
+      }
+    },
+    {
+      "question_id": 5,
+      "old_correct": "C",
+      "new_correct": "C",
+      "new_to_old": {
+        "A": "D",
+        "B": "B",
+        "C": "C",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 6,
+      "old_correct": "C",
+      "new_correct": "C",
+      "new_to_old": {
+        "A": "B",
+        "B": "A",
+        "C": "C",
+        "D": "D"
+      }
+    },
+    {
+      "question_id": 7,
+      "old_correct": "C",
+      "new_correct": "D",
+      "new_to_old": {
+        "A": "B",
+        "B": "A",
+        "C": "D",
+        "D": "C"
+      }
+    },
+    {
+      "question_id": 8,
+      "old_correct": "B",
+      "new_correct": "C",
+      "new_to_old": {
+        "A": "A",
+        "B": "C",
+        "C": "B",
+        "D": "D"
+      }
+    },
+    {
+      "question_id": 9,
+      "old_correct": "C",
+      "new_correct": "C",
+      "new_to_old": {
+        "A": "D",
+        "B": "B",
+        "C": "C",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 10,
+      "old_correct": "C",
+      "new_correct": "A",
+      "new_to_old": {
+        "A": "C",
+        "B": "D",
+        "C": "B",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 11,
+      "old_correct": "C",
+      "new_correct": "C",
+      "new_to_old": {
+        "A": "D",
+        "B": "B",
+        "C": "C",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 12,
+      "old_correct": "C",
+      "new_correct": "A",
+      "new_to_old": {
+        "A": "C",
+        "B": "D",
+        "C": "B",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 13,
+      "old_correct": "C",
+      "new_correct": "D",
+      "new_to_old": {
+        "A": "D",
+        "B": "B",
+        "C": "A",
+        "D": "C"
+      }
+    },
+    {
+      "question_id": 14,
+      "old_correct": "C",
+      "new_correct": "A",
+      "new_to_old": {
+        "A": "C",
+        "B": "B",
+        "C": "D",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 15,
+      "old_correct": "C",
+      "new_correct": "B",
+      "new_to_old": {
+        "A": "A",
+        "B": "C",
+        "C": "B",
+        "D": "D"
+      }
+    },
+    {
+      "question_id": 16,
+      "old_correct": "C",
+      "new_correct": "C",
+      "new_to_old": {
+        "A": "B",
+        "B": "A",
+        "C": "C",
+        "D": "D"
+      }
+    },
+    {
+      "question_id": 17,
+      "old_correct": "C",
+      "new_correct": "C",
+      "new_to_old": {
+        "A": "A",
+        "B": "D",
+        "C": "C",
+        "D": "B"
+      }
+    },
+    {
+      "question_id": 18,
+      "old_correct": "C",
+      "new_correct": "B",
+      "new_to_old": {
+        "A": "D",
+        "B": "C",
+        "C": "B",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 19,
+      "old_correct": "C",
+      "new_correct": "D",
+      "new_to_old": {
+        "A": "D",
+        "B": "B",
+        "C": "A",
+        "D": "C"
+      }
+    },
+    {
+      "question_id": 20,
+      "old_correct": "C",
+      "new_correct": "C",
+      "new_to_old": {
+        "A": "B",
+        "B": "A",
+        "C": "C",
+        "D": "D"
+      }
+    },
+    {
+      "question_id": 21,
+      "old_correct": "C",
+      "new_correct": "C",
+      "new_to_old": {
+        "A": "B",
+        "B": "D",
+        "C": "C",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 22,
+      "old_correct": "C",
+      "new_correct": "B",
+      "new_to_old": {
+        "A": "B",
+        "B": "C",
+        "C": "D",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 23,
+      "old_correct": "C",
+      "new_correct": "A",
+      "new_to_old": {
+        "A": "C",
+        "B": "B",
+        "C": "A",
+        "D": "D"
+      }
+    },
+    {
+      "question_id": 24,
+      "old_correct": "C",
+      "new_correct": "A",
+      "new_to_old": {
+        "A": "C",
+        "B": "B",
+        "C": "D",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 25,
+      "old_correct": "C",
+      "new_correct": "B",
+      "new_to_old": {
+        "A": "B",
+        "B": "C",
+        "C": "A",
+        "D": "D"
+      }
+    },
+    {
+      "question_id": 26,
+      "old_correct": "C",
+      "new_correct": "C",
+      "new_to_old": {
+        "A": "B",
+        "B": "D",
+        "C": "C",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 27,
+      "old_correct": "C",
+      "new_correct": "D",
+      "new_to_old": {
+        "A": "B",
+        "B": "A",
+        "C": "D",
+        "D": "C"
+      }
+    },
+    {
+      "question_id": 28,
+      "old_correct": "C",
+      "new_correct": "B",
+      "new_to_old": {
+        "A": "B",
+        "B": "C",
+        "C": "D",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 29,
+      "old_correct": "C",
+      "new_correct": "B",
+      "new_to_old": {
+        "A": "A",
+        "B": "C",
+        "C": "B",
+        "D": "D"
+      }
+    },
+    {
+      "question_id": 30,
+      "old_correct": "C",
+      "new_correct": "B",
+      "new_to_old": {
+        "A": "B",
+        "B": "C",
+        "C": "D",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 31,
+      "old_correct": "C",
+      "new_correct": "C",
+      "new_to_old": {
+        "A": "A",
+        "B": "D",
+        "C": "C",
+        "D": "B"
+      }
+    },
+    {
+      "question_id": 32,
+      "old_correct": "C",
+      "new_correct": "B",
+      "new_to_old": {
+        "A": "D",
+        "B": "C",
+        "C": "B",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 33,
+      "old_correct": "C",
+      "new_correct": "A",
+      "new_to_old": {
+        "A": "C",
+        "B": "A",
+        "C": "B",
+        "D": "D"
+      }
+    },
+    {
+      "question_id": 34,
+      "old_correct": "C",
+      "new_correct": "A",
+      "new_to_old": {
+        "A": "C",
+        "B": "A",
+        "C": "D",
+        "D": "B"
+      }
+    },
+    {
+      "question_id": 35,
+      "old_correct": "C",
+      "new_correct": "A",
+      "new_to_old": {
+        "A": "C",
+        "B": "A",
+        "C": "B",
+        "D": "D"
+      }
+    },
+    {
+      "question_id": 36,
+      "old_correct": "C",
+      "new_correct": "B",
+      "new_to_old": {
+        "A": "D",
+        "B": "C",
+        "C": "A",
+        "D": "B"
+      }
+    },
+    {
+      "question_id": 37,
+      "old_correct": "C",
+      "new_correct": "C",
+      "new_to_old": {
+        "A": "D",
+        "B": "A",
+        "C": "C",
+        "D": "B"
+      }
+    },
+    {
+      "question_id": 38,
+      "old_correct": "C",
+      "new_correct": "A",
+      "new_to_old": {
+        "A": "C",
+        "B": "A",
+        "C": "D",
+        "D": "B"
+      }
+    },
+    {
+      "question_id": 39,
+      "old_correct": "C",
+      "new_correct": "B",
+      "new_to_old": {
+        "A": "D",
+        "B": "C",
+        "C": "A",
+        "D": "B"
+      }
+    },
+    {
+      "question_id": 40,
+      "old_correct": "C",
+      "new_correct": "C",
+      "new_to_old": {
+        "A": "D",
+        "B": "B",
+        "C": "C",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 41,
+      "old_correct": "C",
+      "new_correct": "A",
+      "new_to_old": {
+        "A": "C",
+        "B": "D",
+        "C": "B",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 42,
+      "old_correct": "B",
+      "new_correct": "D",
+      "new_to_old": {
+        "A": "A",
+        "B": "D",
+        "C": "C",
+        "D": "B"
+      }
+    },
+    {
+      "question_id": 43,
+      "old_correct": "C",
+      "new_correct": "D",
+      "new_to_old": {
+        "A": "B",
+        "B": "D",
+        "C": "A",
+        "D": "C"
+      }
+    },
+    {
+      "question_id": 44,
+      "old_correct": "C",
+      "new_correct": "D",
+      "new_to_old": {
+        "A": "D",
+        "B": "A",
+        "C": "B",
+        "D": "C"
+      }
+    },
+    {
+      "question_id": 45,
+      "old_correct": "C",
+      "new_correct": "C",
+      "new_to_old": {
+        "A": "D",
+        "B": "A",
+        "C": "C",
+        "D": "B"
+      }
+    },
+    {
+      "question_id": 46,
+      "old_correct": "C",
+      "new_correct": "C",
+      "new_to_old": {
+        "A": "B",
+        "B": "A",
+        "C": "C",
+        "D": "D"
+      }
+    },
+    {
+      "question_id": 47,
+      "old_correct": "B",
+      "new_correct": "D",
+      "new_to_old": {
+        "A": "D",
+        "B": "C",
+        "C": "A",
+        "D": "B"
+      }
+    },
+    {
+      "question_id": 48,
+      "old_correct": "B",
+      "new_correct": "B",
+      "new_to_old": {
+        "A": "A",
+        "B": "B",
+        "C": "C",
+        "D": "D"
+      }
+    },
+    {
+      "question_id": 49,
+      "old_correct": "C",
+      "new_correct": "D",
+      "new_to_old": {
+        "A": "D",
+        "B": "A",
+        "C": "B",
+        "D": "C"
+      }
+    },
+    {
+      "question_id": 50,
+      "old_correct": "C",
+      "new_correct": "A",
+      "new_to_old": {
+        "A": "C",
+        "B": "A",
+        "C": "B",
+        "D": "D"
+      }
+    },
+    {
+      "question_id": 51,
+      "old_correct": "C",
+      "new_correct": "B",
+      "new_to_old": {
+        "A": "D",
+        "B": "C",
+        "C": "B",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 52,
+      "old_correct": "C",
+      "new_correct": "D",
+      "new_to_old": {
+        "A": "B",
+        "B": "A",
+        "C": "D",
+        "D": "C"
+      }
+    },
+    {
+      "question_id": 53,
+      "old_correct": "C",
+      "new_correct": "B",
+      "new_to_old": {
+        "A": "D",
+        "B": "C",
+        "C": "A",
+        "D": "B"
+      }
+    },
+    {
+      "question_id": 54,
+      "old_correct": "C",
+      "new_correct": "A",
+      "new_to_old": {
+        "A": "C",
+        "B": "B",
+        "C": "A",
+        "D": "D"
+      }
+    },
+    {
+      "question_id": 55,
+      "old_correct": "C",
+      "new_correct": "A",
+      "new_to_old": {
+        "A": "C",
+        "B": "A",
+        "C": "B",
+        "D": "D"
+      }
+    },
+    {
+      "question_id": 56,
+      "old_correct": "C",
+      "new_correct": "D",
+      "new_to_old": {
+        "A": "A",
+        "B": "D",
+        "C": "B",
+        "D": "C"
+      }
+    },
+    {
+      "question_id": 57,
+      "old_correct": "C",
+      "new_correct": "B",
+      "new_to_old": {
+        "A": "B",
+        "B": "C",
+        "C": "D",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 58,
+      "old_correct": "C",
+      "new_correct": "B",
+      "new_to_old": {
+        "A": "A",
+        "B": "C",
+        "C": "D",
+        "D": "B"
+      }
+    },
+    {
+      "question_id": 59,
+      "old_correct": "C",
+      "new_correct": "C",
+      "new_to_old": {
+        "A": "D",
+        "B": "B",
+        "C": "C",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 60,
+      "old_correct": "C",
+      "new_correct": "D",
+      "new_to_old": {
+        "A": "B",
+        "B": "D",
+        "C": "A",
+        "D": "C"
+      }
+    },
+    {
+      "question_id": 61,
+      "old_correct": "C",
+      "new_correct": "D",
+      "new_to_old": {
+        "A": "B",
+        "B": "D",
+        "C": "A",
+        "D": "C"
+      }
+    },
+    {
+      "question_id": 62,
+      "old_correct": "C",
+      "new_correct": "A",
+      "new_to_old": {
+        "A": "C",
+        "B": "A",
+        "C": "B",
+        "D": "D"
+      }
+    },
+    {
+      "question_id": 63,
+      "old_correct": "C",
+      "new_correct": "C",
+      "new_to_old": {
+        "A": "B",
+        "B": "A",
+        "C": "C",
+        "D": "D"
+      }
+    },
+    {
+      "question_id": 64,
+      "old_correct": "C",
+      "new_correct": "B",
+      "new_to_old": {
+        "A": "A",
+        "B": "C",
+        "C": "D",
+        "D": "B"
+      }
+    },
+    {
+      "question_id": 65,
+      "old_correct": "C",
+      "new_correct": "A",
+      "new_to_old": {
+        "A": "C",
+        "B": "B",
+        "C": "D",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 66,
+      "old_correct": "C",
+      "new_correct": "B",
+      "new_to_old": {
+        "A": "B",
+        "B": "C",
+        "C": "A",
+        "D": "D"
+      }
+    },
+    {
+      "question_id": 67,
+      "old_correct": "C",
+      "new_correct": "B",
+      "new_to_old": {
+        "A": "D",
+        "B": "C",
+        "C": "A",
+        "D": "B"
+      }
+    },
+    {
+      "question_id": 68,
+      "old_correct": "C",
+      "new_correct": "A",
+      "new_to_old": {
+        "A": "C",
+        "B": "D",
+        "C": "B",
+        "D": "A"
+      }
+    },
+    {
+      "question_id": 69,
+      "old_correct": "C",
+      "new_correct": "A",
+      "new_to_old": {
+        "A": "C",
+        "B": "A",
+        "C": "D",
+        "D": "B"
+      }
+    },
+    {
+      "question_id": 70,
+      "old_correct": "C",
+      "new_correct": "D",
+      "new_to_old": {
+        "A": "D",
+        "B": "A",
+        "C": "B",
+        "D": "C"
+      }
+    }
+  ],
+  "original_sha256": "4e68eb127a02cf9121dac903f915e72ae86fc9a12f27c479469b29018c369e52"
+}

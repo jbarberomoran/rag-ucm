@@ -1,3 +1,8 @@
+[project]
+name = "rag-ucm"
+version = "0.1.0"
+requires-python = ">=3.11,<3.12"
+
 [tool.pytest.ini_options]
 addopts = "-q --strict-markers"
 testpaths = ["tests"]

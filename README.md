@@ -55,7 +55,10 @@ Git. A compact summary of the previously published final experiment is kept in
 python3.11 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install -r requirements-dev.txt
+# Apple Silicon, macOS 14+:
+python -m pip install -r requirements-dev-macos.lock
+# Linux x86_64 / CI: use requirements-dev-linux.lock instead.
+# Other platforms: requirements-dev.txt (resolve and validate separately).
 cp .env.example .env
 ```
 
@@ -73,8 +76,9 @@ Model weights occupy about 2.5 GB; working memory also depends on the context wi
 `.env.example` documents `LLM_PROVIDER`, `LLM_MODEL`, `LLM_BASE_URL` and limits.
 CLI flags override environment values. Keep provider and model names consistent.
 
-Never commit `.env`. To use the notebook, install
-`requirements-notebook.txt` instead of `requirements-dev.txt`.
+Never commit `.env`. Optional notebook/cloud dependencies are separate and not
+covered by the core lockfiles. Install them before starting an experiment;
+changing the environment invalidates resume.
 
 Validate the local setup without making an API call:
 
@@ -94,6 +98,8 @@ are controlled by the provider. No automatic provider fallback mixes experiments
 Historical result summaries used Gemini and are not Qwen benchmarks.
 See [local validation](docs/local-validation.md) for a real 15-request smoke test
 using Qwen, including the exact model digest and reproduction command.
+That smoke predates rebalancing. See [benchmark validity](docs/benchmark-validity.md)
+for the corrected dataset, full-run protocol and human annotation workflow.
 
 ## Tests and quality checks
 
@@ -135,10 +141,14 @@ prevents an accidental invocation from making ten full batches of paid API
 calls, which was the previous behavior.
 
 Select another locally installed model with `--provider ollama --model MODEL`.
+Also supply its matching `--tokenizer NAME --tokenizer-revision COMMIT_SHA`.
+The default Qwen tokenizer is already pinned. Prompts are rendered locally;
+Ollama's reported input token count must agree before an answer is scored.
 Manifests include provider, model digest/server version for Ollama and generation
 limits; each result row also records provider and model. Resume rejects changes
-to generation identity. Long prompts fail conservatively instead of silently
-truncating retrieved evidence; adjust `--context-tokens` to fit your machine.
+to generation identity, source, dataset, Python and installed package versions.
+All retrieval methods have a common 2,048-token budget and at most five whole
+chunks. Oversized chunks are skipped; only supplied chunks are scored.
 
 Existing experiment directories require `--resume` or a new `--name`.
 `--keep-existing` is a compatibility alias for resume. Each experiment has its
@@ -148,10 +158,16 @@ Optional `--annotations PATH` enables metrics against human-labeled chunk IDs.
 The notebook now analyzes saved runs or displays the historical summary when no
 run exists, without requiring an API key. Historical results predate the fixes
 and are not evidence that the corrected pipeline achieves the same accuracy.
+`summary.json` reports expected/valid/failed/missing observations, end-to-end
+accuracy (failures count against it), and accuracy conditional on valid responses.
+Incomplete runs save artifacts and exit nonzero; `--resume` retries failures,
+including ambiguous outputs. Plots and paired statistics use valid responses only.
 
 ## Data and reproducibility
 
-- `data/questions.json` contains 70 validated multiple-choice questions.
+- `data/questions.json` contains 70 questions with correct-option positions
+  A=18, B=18, C=17, D=17. Correct answer text and references are unchanged.
+- `data/questions-permutation.json` records seed, hashes and reversible mappings.
 - `data/chroma_db/` is regenerated locally and must not be committed.
 - `results/` contains generated CSV and plot outputs and must not be committed.
 - Retrieved documents are stored as JSON in result rows so the evidence remains

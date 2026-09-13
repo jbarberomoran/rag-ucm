@@ -13,7 +13,7 @@ class DocumentLike(Protocol):
     metadata: dict[str, Any]
 
 
-ANSWER_PATTERN = re.compile(r"\b([A-D])\b", re.IGNORECASE)
+ANSWER_PATTERN = re.compile(r"(?:The answer is\s+)?([A-D])\.?", re.IGNORECASE)
 
 
 def normalize_text(text: str) -> str:
@@ -22,8 +22,8 @@ def normalize_text(text: str) -> str:
 
 
 def extract_answer(raw_answer: str) -> str:
-    """Extract a standalone multiple-choice letter or return ``X``."""
-    match = ANSWER_PATTERN.search(raw_answer)
+    """Accept only one letter or the exact legacy wrapper; reject ambiguity."""
+    match = ANSWER_PATTERN.fullmatch(raw_answer.strip())
     return match.group(1).upper() if match else "X"
 
 
