@@ -9,7 +9,6 @@ QUESTIONS_PATH = DATA_DIR / "questions.json"
 PAPER_PATH = DATA_DIR / "paper_refrag.pdf"
 CHROMA_PATH = DATA_DIR / "chroma_db"
 
-MODEL_NAME = "models/gemini-2.5-flash-lite"
 EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
 RERANKER_MODEL_NAME = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 

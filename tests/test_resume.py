@@ -51,7 +51,10 @@ def test_cli_baseline_resume_preserves_rows_without_building_index(tmp_path, mon
     monkeypatch.setattr(main, "RESULTS_DIR", tmp_path / "results")
     monkeypatch.setattr(main, "QUESTIONS_PATH", questions)
     monkeypatch.setattr(main, "PAPER_PATH", questions)
-    monkeypatch.setenv("GOOGLE_API_KEY", "test-only")
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    monkeypatch.setattr(main, "create_generator", lambda settings: SimpleNamespace(
+        identity=lambda: {"provider": "ollama", "digest": "test-digest"}
+    ))
     monkeypatch.setattr(main, "db_setup", lambda *a: pytest.fail("baseline must not load index"))
     def offline(*args, **kwargs):
         kwargs.update(questions_path=questions, query_fn=lambda *a: ("B", []))
@@ -70,4 +73,3 @@ def test_cli_baseline_resume_preserves_rows_without_building_index(tmp_path, mon
     main.run_experiment(args)
     assert len(pd.read_csv(result)) == 2
     assert (result.parent / "paired_statistics.json").exists()
-

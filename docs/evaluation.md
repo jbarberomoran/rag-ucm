@@ -6,6 +6,11 @@ this dataset and paper; the known option imbalance remains a limitation.
 ## Separate the measurements
 Baseline uses its own internal-knowledge prompt. Retrieved-context methods use
 the same context-grounded prompt and temperature.
+Generation defaults to Qwen3 4B Instruct via a local Ollama server. Select another
+model/provider explicitly; retrieval and evaluation do not depend on Gemini.
+The optional cloud adapter is installed separately. A single experiment uses one
+provider/model identity; Ollama model digests prevent silently resuming with
+replaced weights. Historical summaries refer to the original Gemini experiments.
 Correctness is answer-key agreement. Reference overlap is lexical matching
 (longest normalized matching span / reference length, threshold 0.5).
 It is not semantic support, faithfulness, reasoning quality or evidence of luck.
@@ -64,11 +69,10 @@ Baseline-only runs do not build or load Chroma.
 ## Verification
 Offline unit tests cover prompts, paired alignment, errors/resume and provenance.
 The separate integration suite uses actual temporary Chroma storage and deterministic
-local embeddings, without Gemini or model downloads:
+local embeddings, without generation requests or model downloads:
 ```bash
 python -m pytest
 python -m pytest integration_tests
 ```
 These checks verify software behavior; they do not replace live retrieval/model
 evaluation or human relevance annotation.
-

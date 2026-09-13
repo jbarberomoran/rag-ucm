@@ -109,7 +109,6 @@ def test_cross_encoder_uses_broad_hybrid_retrieval_then_reranks():
     ("method", "api_key", "answer_options", "message"),
     [
         ("unknown", "key", options(), "Unsupported method"),
-        ("baseline", None, options(), "GOOGLE_API_KEY"),
         ("baseline", "key", {"A": "only"}, "exactly A, B, C, and D"),
     ],
 )

@@ -7,7 +7,8 @@ import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 
-from src.config import EMBEDDING_MODEL_NAME, MODEL_NAME, RERANKER_MODEL_NAME
+from src.config import EMBEDDING_MODEL_NAME, RERANKER_MODEL_NAME
+from src.generation import resolve_settings
 
 
 def file_hash(path):
@@ -39,7 +40,8 @@ def experiment_config(args, questions, paper):
         )).hexdigest(),
         "schema": 2, "questions_sha256": file_hash(questions), "paper_sha256": file_hash(paper),
         "methods": list(args.methods), "questions": args.questions, "runs": args.runs,
-        "model": MODEL_NAME, "temperature": 0, "embedding_model": EMBEDDING_MODEL_NAME,
+        "generation": resolve_settings(args).public_config(),
+        "embedding_model": EMBEDDING_MODEL_NAME,
         "reranker_model": RERANKER_MODEL_NAME, "chunking": args.chunking,
         "chunk_size": 1200, "chunk_overlap": 350, "semantic_percentile": 95,
         "retrieval_k": 5, "candidate_k_per_retriever": 20, "hybrid_weights": [0.5, 0.5],

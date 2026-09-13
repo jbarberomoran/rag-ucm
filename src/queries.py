@@ -53,6 +53,8 @@ def run_questions(
     run_id: int = 1,
     resume: bool = False,
     annotations: dict | None = None,
+    generator=None,
+    generation_settings=None,
 ) -> pd.DataFrame:
     """Run selected questions and persist a transparent row per experiment."""
     selected_methods = _validate_methods(methods or SUPPORTED_METHODS)
@@ -80,7 +82,9 @@ def run_questions(
             error = ""
             try:
                 raw_answer, retrieved_docs = query_fn(
-                    question["question"], question["answers"], method, api_key
+                    question["question"], question["answers"], method, api_key,
+                    **({"generator": generator, "settings": generation_settings, "engine": engine}
+                       if query_fn is query_rag else {}),
                 )
             except Exception as exc:
                 # Store only the exception class; provider messages can contain secrets.
@@ -96,6 +100,8 @@ def run_questions(
             )
             row = {
                 "run_id": run_id,
+                "provider": generation_settings.provider if generation_settings else "injected",
+                "model": generation_settings.model if generation_settings else "injected",
                 "question_id": question_id,
                 "method": method,
                 "correct": is_correct if not error else None,

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import os
 import re
 from pathlib import Path
 
@@ -12,6 +11,7 @@ from dotenv import load_dotenv
 
 from src.config import CHROMA_PATH, PAPER_PATH, QUESTIONS_PATH, RESULTS_DIR, SUPPORTED_METHODS
 from src.evaluation import evaluate_results, generate_dashboard
+from src.generation import create_generator, resolve_settings
 from src.ingestion import db_setup
 from src.provenance import experiment_config, load_annotations, prepare_manifest, save_json
 from src.queries import run_questions
@@ -35,6 +35,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--chunking", choices=["recursive", "semantic"], default="semantic")
     parser.add_argument("--annotations", type=Path, help="Optional question-to-chunk-ID JSON")
     parser.add_argument("--skip-plots", action="store_true")
+    parser.add_argument("--provider", choices=["ollama", "gemini"])
+    parser.add_argument("--model", help="Generation model name (provider-specific)")
+    parser.add_argument("--base-url", help="Ollama server URL")
+    parser.add_argument("--timeout", type=float, help="Generation request timeout in seconds")
+    parser.add_argument("--context-tokens", type=int, help="Ollama context window")
+    parser.add_argument("--max-tokens", type=int, help="Maximum generated tokens")
     return parser.parse_args()
 
 
@@ -47,9 +53,8 @@ def run_experiment(args: argparse.Namespace) -> Path:
         raise ValueError("--methods must not contain duplicates")
 
     load_dotenv()
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        raise RuntimeError("GOOGLE_API_KEY is missing; copy .env.example to .env")
+    settings = resolve_settings(args)
+    generator = create_generator(settings)
 
     if args.name and not RESULT_NAME_PATTERN.fullmatch(args.name):
         raise ValueError("--name may contain only letters, numbers, dots, dashes, and underscores")
@@ -66,6 +71,7 @@ def run_experiment(args: argparse.Namespace) -> Path:
         raise ValueError("Experiment directory is not empty; choose --name or use --resume")
     results_dir.mkdir(parents=True, exist_ok=True)
     config = experiment_config(args, QUESTIONS_PATH, PAPER_PATH)
+    config["generation_identity"] = generator.identity()
     prepare_manifest(results_dir / "manifest.json", config, resume)
     if any(method != "baseline" for method in args.methods):
         db_setup(args.rebuild_db, args.chunking)
@@ -75,12 +81,14 @@ def run_experiment(args: argparse.Namespace) -> Path:
         run_questions(
             args.questions,
             args.methods,
-            api_key,
+            settings.api_key,
             partial_file,
             args.sleep,
             run_id=run_id,
             resume=resume,
             annotations=annotations,
+            generator=generator,
+            generation_settings=settings,
         )
 
     if not partial_file.exists():

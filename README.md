@@ -2,12 +2,12 @@
 
 University research project developed with Management Solutions and the Faculty
 of Mathematics at Universidad Complutense de Madrid. It compares how retrieval
-strategies affect a Gemini model answering multiple-choice questions about a
+strategies affect a configurable language model answering multiple-choice questions about a
 technical research paper.
 
 ## Compared methods
 
-- `baseline`: Gemini without retrieved context.
+- `baseline`: the selected language model without retrieved context.
 - `bm25`: keyword retrieval.
 - `dense`: embedding similarity with Chroma.
 - `hybrid`: weighted BM25 and dense retrieval.
@@ -29,7 +29,8 @@ alone establishes whether the model used the context. See [evaluation protocol](
 │   ├── domain.py          # Pure scoring and serialization logic
 │   ├── ingestion.py       # PDF loading, chunking, and vector-store creation
 │   ├── retrieval.py       # BM25, dense, hybrid, and cross-encoder retrieval
-│   ├── rag_pipeline.py    # Prompt construction and Gemini invocation
+│   ├── rag_pipeline.py    # Prompt construction and provider-independent generation
+│   ├── generation.py      # Ollama default; optional Gemini adapter
 │   ├── question_data.py   # Dataset validation and selection
 │   ├── queries.py         # Experiment orchestration
 │   └── evaluation.py      # Metrics and plots
@@ -45,8 +46,8 @@ Git. A compact summary of the previously published final experiment is kept in
 ## Requirements
 
 - Python 3.11
-- A Google Gemini API key for experiment runs
-- Internet access the first time Hugging Face models are downloaded
+- Ollama running locally, with `qwen3:4b-instruct` downloaded (default model)
+- Internet access for initial Ollama and Hugging Face model downloads
 
 ## Setup
 
@@ -58,11 +59,19 @@ python -m pip install -r requirements-dev.txt
 cp .env.example .env
 ```
 
-Add your key to `.env`:
+Install [Ollama](https://docs.ollama.com/quickstart), start its server in another
+terminal and download the default [model](https://ollama.com/library/qwen3:4b-instruct):
 
-```dotenv
-GOOGLE_API_KEY=your-key-here
+```bash
+ollama serve
+# In another terminal:
+ollama pull qwen3:4b-instruct
 ```
+
+No Google account or API key is required. Generation runs on your machine.
+Model weights occupy about 2.5 GB; working memory also depends on the context window.
+`.env.example` documents `LLM_PROVIDER`, `LLM_MODEL`, `LLM_BASE_URL` and limits.
+CLI flags override environment values. Keep provider and model names consistent.
 
 Never commit `.env`. To use the notebook, install
 `requirements-notebook.txt` instead of `requirements-dev.txt`.
@@ -73,7 +82,18 @@ Validate the local setup without making an API call:
 python -m scripts.check_environment
 ```
 
-Use `--check-api` only when you explicitly want to make one Gemini request.
+Use `python -m scripts.check_environment --check-generation` to check the
+installed model and make one request. `--check-api` remains a compatibility alias.
+
+### Optional cloud generation
+
+Install `requirements-gemini.txt`, configure `GOOGLE_API_KEY` in `.env`, then run
+`python main.py --provider gemini --model YOUR_AVAILABLE_MODEL --name cloud-run`.
+The optional adapter is loaded only when selected. Model availability and billing
+are controlled by the provider. No automatic provider fallback mixes experiments.
+Historical result summaries used Gemini and are not Qwen benchmarks.
+See [local validation](docs/local-validation.md) for a real 15-request smoke test
+using Qwen, including the exact model digest and reproduction command.
 
 ## Tests and quality checks
 
@@ -113,6 +133,12 @@ python main.py --name final-comparison --runs 10 --resume
 Use `python main.py --help` for every option. The default is one run; this
 prevents an accidental invocation from making ten full batches of paid API
 calls, which was the previous behavior.
+
+Select another locally installed model with `--provider ollama --model MODEL`.
+Manifests include provider, model digest/server version for Ollama and generation
+limits; each result row also records provider and model. Resume rejects changes
+to generation identity. Long prompts fail conservatively instead of silently
+truncating retrieved evidence; adjust `--context-tokens` to fit your machine.
 
 Existing experiment directories require `--resume` or a new `--name`.
 `--keep-existing` is a compatibility alias for resume. Each experiment has its

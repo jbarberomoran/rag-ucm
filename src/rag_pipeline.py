@@ -1,10 +1,10 @@
 """RAG answer generation and deterministic evidence verification."""
 
 from langchain_core.prompts import PromptTemplate
-from langchain_google_genai import ChatGoogleGenerativeAI
 
-from src.config import MODEL_NAME, SUPPORTED_METHODS
+from src.config import SUPPORTED_METHODS
 from src.domain import normalize_text, verify_evidence
+from src.generation import create_generator, resolve_settings
 from src.retrieval import RetrievalEngine
 
 RAG_TEMPLATE = """
@@ -48,12 +48,13 @@ Output ONLY the single correct letter (A, B, C, or D), without explanation.
 """)
 
 
-def query_rag(question, options, method, api_key, *, engine=None, llm_factory=None):
+def query_rag(
+    question, options, method, api_key=None, *, engine=None, llm_factory=None,
+    generator=None, settings=None,
+):
     """Answer one multiple-choice question with the selected retrieval method."""
     if method not in SUPPORTED_METHODS:
         raise ValueError(f"Unsupported method: {method}")
-    if not api_key:
-        raise ValueError("GOOGLE_API_KEY is required")
     if set(options) != {"A", "B", "C", "D"}:
         raise ValueError("options must contain exactly A, B, C, and D")
 
@@ -73,8 +74,11 @@ def query_rag(question, options, method, api_key, *, engine=None, llm_factory=No
         relevant_docs = retriever.invoke(question)
         context_text = "\n\n".join(doc.page_content for doc in relevant_docs)
 
-    factory = llm_factory or ChatGoogleGenerativeAI
-    llm = factory(model=MODEL_NAME, google_api_key=api_key, temperature=0)
+    settings = settings or resolve_settings(api_key=api_key)
+    llm = generator or (
+        llm_factory(model=settings.model, temperature=settings.temperature)
+        if llm_factory else create_generator(settings)
+    )
     prompt = BASELINE_PROMPT if method == "baseline" else PROMPT
     formatted_prompt = prompt.format(
         context=context_text,
