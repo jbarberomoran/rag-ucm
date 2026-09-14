@@ -2,7 +2,8 @@
 
 from langchain_core.prompts import PromptTemplate
 
-from src.config import SUPPORTED_METHODS
+from src.config import CONTEXT_TOKEN_BUDGET, SUPPORTED_METHODS
+from src.context import pack_context
 from src.domain import normalize_text, verify_evidence
 from src.generation import create_generator, resolve_settings
 from src.retrieval import RetrievalEngine
@@ -79,6 +80,9 @@ def query_rag(
         llm_factory(model=settings.model, temperature=settings.temperature)
         if llm_factory else create_generator(settings)
     )
+    if method != "baseline":
+        relevant_docs = pack_context(relevant_docs, llm.count_tokens, CONTEXT_TOKEN_BUDGET)
+        context_text = "\n\n".join(doc.page_content for doc in relevant_docs)
     prompt = BASELINE_PROMPT if method == "baseline" else PROMPT
     formatted_prompt = prompt.format(
         context=context_text,

@@ -41,6 +41,9 @@ class FakeLlm:
         self.response = response
         self.prompts = []
 
+    def count_tokens(self, text):
+        return len(text.split())
+
     def invoke(self, prompt):
         self.prompts.append(prompt)
         return SimpleNamespace(content=self.response)

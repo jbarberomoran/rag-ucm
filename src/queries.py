@@ -94,6 +94,8 @@ def run_questions(
                 time.sleep(sleep_time)
 
             predicted = extract_answer(raw_answer)
+            if not error and predicted == "X":
+                error = "InvalidAnswer"
             is_correct = predicted == question["correct_answer"]
             found_evidence, evidence_score = verify_evidence(
                 retrieved_docs, question.get("paper_reference", "")
@@ -118,6 +120,10 @@ def run_questions(
                 "retrieved_docs": json.dumps(
                     serialize_documents(retrieved_docs), ensure_ascii=False
                 ),
+                **{key: (getattr(generator, "last_metadata", {}).get(key) if not error else None)
+                   for key in (
+                       "prompt_eval_count", "eval_count", "load_duration", "total_duration"
+                   )},
             }
             row.update(score_retrieval(
                 retrieved_docs, (annotations or {}).get(str(question_id), [])
@@ -129,5 +135,7 @@ def run_questions(
                 header=not output_path.exists(),
                 index=False,
             )
+            print(f"Run {run_id}, question {question_id}, {method}: "
+                  f"{error or ('correct' if is_correct else 'incorrect')}", flush=True)
 
     return pd.DataFrame(results)

@@ -7,7 +7,13 @@ import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 
-from src.config import EMBEDDING_MODEL_NAME, RERANKER_MODEL_NAME
+from src.config import (
+    CONTEXT_TOKEN_BUDGET,
+    EMBEDDING_MODEL_NAME,
+    EMBEDDING_REVISION,
+    RERANKER_MODEL_NAME,
+    RERANKER_REVISION,
+)
 from src.generation import resolve_settings
 
 
@@ -26,6 +32,7 @@ def index_config(paper, method, size, overlap):
     return {
         "schema": 1, "paper_sha256": file_hash(paper),
         "embedding_model": EMBEDDING_MODEL_NAME, "chunking": method,
+        "embedding_revision": EMBEDDING_REVISION,
         "chunk_size": size, "chunk_overlap": overlap, "semantic_percentile": 95,
     }
 
@@ -42,6 +49,9 @@ def experiment_config(args, questions, paper):
         "methods": list(args.methods), "questions": args.questions, "runs": args.runs,
         "generation": resolve_settings(args).public_config(),
         "embedding_model": EMBEDDING_MODEL_NAME,
+        "embedding_revision": EMBEDDING_REVISION,
+        "reranker_revision": RERANKER_REVISION,
+        "context_token_budget": CONTEXT_TOKEN_BUDGET,
         "reranker_model": RERANKER_MODEL_NAME, "chunking": args.chunking,
         "chunk_size": 1200, "chunk_overlap": 350, "semantic_percentile": 95,
         "retrieval_k": 5, "candidate_k_per_retriever": 20, "hybrid_weights": [0.5, 0.5],
@@ -53,12 +63,16 @@ def experiment_config(args, questions, paper):
 
 def prepare_manifest(path, config, resume=False):
     path = Path(path)
+    packages = {d.metadata["Name"]: d.version for d in importlib.metadata.distributions()}
     if resume:
         if not path.exists():
             raise ValueError("Cannot resume without manifest.json")
         manifest = json.loads(path.read_text())
         if manifest["config"] != config:
             raise ValueError("Resume configuration differs from the saved experiment")
+        if (manifest.get("python") != platform.python_version()
+                or manifest.get("packages") != packages):
+            raise ValueError("Resume environment differs from the saved experiment")
         return manifest
     try:
         revision = subprocess.check_output(
@@ -66,11 +80,10 @@ def prepare_manifest(path, config, resume=False):
         ).strip()
     except (OSError, subprocess.CalledProcessError):
         revision = None
-    packages = {d.metadata["Name"]: d.version for d in importlib.metadata.distributions()}
     manifest = {
         "created_at": datetime.now(UTC).isoformat(), "git_revision": revision,
         "python": platform.python_version(), "packages": packages, "config": config,
-        "limitations": "Model names are not immutable provider revisions; dataset is unchanged.",
+        "limitations": "Single-paper dataset; optional cloud aliases may change server-side.",
     }
     save_json(path, manifest)
     return manifest

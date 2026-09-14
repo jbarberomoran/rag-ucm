@@ -38,6 +38,9 @@ def select_questions(
     if indices is None:
         return list(enumerate(questions, start=1))
 
+    if len(indices) != len(set(indices)):
+        raise ValueError("Question indices must not contain duplicates")
+
     selected = []
     for index in indices:
         if index < 0 or index >= len(questions):

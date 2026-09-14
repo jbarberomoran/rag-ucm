@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import re
+from collections import Counter
 from pathlib import Path
 
 import pandas as pd
@@ -15,6 +16,8 @@ from src.generation import create_generator, resolve_settings
 from src.ingestion import db_setup
 from src.provenance import experiment_config, load_annotations, prepare_manifest, save_json
 from src.queries import run_questions
+from src.question_data import load_questions, select_questions
+from src.run_summary import summarize_run
 from src.statistics import paired_report
 
 RESULT_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
@@ -41,6 +44,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--timeout", type=float, help="Generation request timeout in seconds")
     parser.add_argument("--context-tokens", type=int, help="Ollama context window")
     parser.add_argument("--max-tokens", type=int, help="Maximum generated tokens")
+    parser.add_argument("--tokenizer", help="Hugging Face tokenizer for a custom Ollama model")
+    parser.add_argument("--tokenizer-revision", help="Immutable tokenizer commit SHA")
     return parser.parse_args()
 
 
@@ -51,6 +56,9 @@ def run_experiment(args: argparse.Namespace) -> Path:
         raise ValueError("--sleep must be non-negative")
     if len(set(args.methods)) != len(args.methods):
         raise ValueError("--methods must not contain duplicates")
+    selected = select_questions(load_questions(QUESTIONS_PATH), args.questions)
+    if not selected:
+        raise ValueError("No questions selected")
 
     load_dotenv()
     settings = resolve_settings(args)
@@ -102,16 +110,38 @@ def run_experiment(args: argparse.Namespace) -> Path:
     combined["correct"] = pd.to_numeric(combined["correct"], errors="raise")
     results_dir.mkdir(parents=True, exist_ok=True)
     combined.to_csv(final_file, index=False)
+    summary = summarize_run(combined, [q for q, _ in selected], args.methods, args.runs)
+    answer_counts = Counter(q["correct_answer"] for _, q in selected)
+    summary["dataset_controls"] = {
+        "answer_distribution": dict(answer_counts),
+        "majority_letter_accuracy": max(answer_counts.values()) / len(selected),
+        "uniform_random_expected_accuracy": 0.25,
+        "note": "Analytical controls, not additional model requests.",
+    }
+    save_json(results_dir / "summary.json", summary)
+    print(f"Experiment complete: {summary['complete']}; "
+          f"full accounting: {results_dir / 'summary.json'}", flush=True)
     save_json(results_dir / "paired_statistics.json", paired_report(combined))
     successful = combined[combined["error"].fillna("") == ""]
     evaluate_results(successful, str(final_file))
     if not args.skip_plots and not successful.empty:
         generate_dashboard(str(final_file), str(results_dir / "plots"))
+    if not summary["complete"]:
+        raise IncompleteExperimentError(
+            f"Incomplete experiment; see {results_dir / 'summary.json'} and retry with --resume"
+        )
     return final_file
 
 
+class IncompleteExperimentError(RuntimeError):
+    """Artifacts were saved, but one or more observations are invalid or missing."""
+
+
 def main() -> None:
-    run_experiment(parse_args())
+    try:
+        run_experiment(parse_args())
+    except IncompleteExperimentError as exc:
+        raise SystemExit(str(exc)) from None
 
 
 if __name__ == "__main__":

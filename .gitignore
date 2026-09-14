@@ -1,9 +1,9 @@
-# --- 1. SEGURIDAD (LO MÁS IMPORTANTE) ---
+# Local secrets
 .env
 .env.local
 key.env
 
-# --- 2. BASURA DE PYTHON ---
+# Python environments, caches and reports
 .venv/
 .python/
 __pycache__/
@@ -15,26 +15,24 @@ __pycache__/
 .coverage
 htmlcov/
 
-# --- 3. DATOS PESADOS O GENERADOS ---
-# La base de datos vectorial se regenera con el código, no se sube (pesa mucho)
+# Generated vector index
 /data/chroma_db/
 
-# El PDF del paper (Opcional: Si tiene copyright, mejor no subirlo)
+# Uncomment if redistribution rights for source PDFs are unavailable.
 # /data/*.pdf
 
-# --- 4. JUPYTER NOTEBOOKS ---
-# Ignorar carpetas de autoguardado
+# Notebook checkpoints and local session state
 .ipynb_checkpoints/
+*.ses
 
-# --- 5. ARCHIVOS DE SISTEMA / IDE ---
+# Editors and operating systems
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
 
-# --- 6. RESULTADOS GENERADOS ---
-# Los resultados se regeneran con main.py. Las métricas finales resumidas viven en docs/.
+# Generated experiment artifacts; compact reviewed summaries live in docs/.
 /results/
 
-# --- 7. COPIAS DE SEGURIDAD LOCALES ---
+# Local backups
 backups/

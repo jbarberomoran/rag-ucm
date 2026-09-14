@@ -54,7 +54,8 @@ def test_evaluate_results_prints_accuracy(capsys):
     evaluate_results(sample_results(), "final.csv")
 
     output = capsys.readouterr().out
-    assert "RESUMEN DE PRECISIÓN" in output
+    assert "ACCURACY ENTRE RESPUESTAS VÁLIDAS" in output
+    assert "summary.json" in output
     assert "final.csv" in output
 
 
