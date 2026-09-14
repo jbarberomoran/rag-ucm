@@ -1,5 +1,7 @@
 # Two-Stage Retrieval RAG
 
+[![Tests](https://github.com/jbarberomoran/rag-ucm/actions/workflows/tests.yml/badge.svg)](https://github.com/jbarberomoran/rag-ucm/actions/workflows/tests.yml)
+
 University research project developed with Management Solutions and the Faculty
 of Mathematics at Universidad Complutense de Madrid. It compares how retrieval
 strategies affect a configurable language model answering multiple-choice questions about a
@@ -16,6 +18,11 @@ technical research paper.
 Answer correctness and retrieval evidence are measured separately. This avoids
 confusing answer-key agreement with lexical reference overlap. Neither metric
 alone establishes whether the model used the context. See [evaluation protocol](docs/evaluation.md).
+
+The corrected full benchmark completed 350/350 local Qwen observations without
+failures. BM25 and cross-encoder each reached 98.57% on this single-paper dataset;
+the [benchmark report](docs/qwen-balanced-benchmark.md) states the controls,
+provenance and limits needed to interpret that result responsibly.
 
 ## Repository layout
 
