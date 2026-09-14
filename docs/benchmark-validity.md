@@ -1,5 +1,8 @@
 # Balanced-dataset benchmark
 
+The [completed 350-observation run](qwen-balanced-benchmark.md) includes verified
+results, limitations and provenance hashes.
+
 ## Dataset correction
 
 The original answer positions were A=0, B=5, C=64, D=1: always answering C

@@ -1,0 +1,6 @@
+method,questions,correct,failed,missing,accuracy_pct,mean_response_time_s
+baseline,70,52,0,0,74.285714,0.334481
+bm25,70,69,0,0,98.571429,2.692800
+dense,70,60,0,0,85.714286,2.733487
+hybrid,70,64,0,0,91.428571,2.861974
+cross_encoder,70,69,0,0,98.571429,2.687994

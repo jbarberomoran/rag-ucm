@@ -100,6 +100,8 @@ See [local validation](docs/local-validation.md) for a real 15-request smoke tes
 using Qwen, including the exact model digest and reproduction command.
 That smoke predates rebalancing. See [benchmark validity](docs/benchmark-validity.md)
 for the corrected dataset, full-run protocol and human annotation workflow.
+The [full balanced benchmark](docs/qwen-balanced-benchmark.md) completed all
+350 observations without failures; its results are separate from historical runs.
 
 ## Tests and quality checks
 
