@@ -4,8 +4,30 @@
 
 University research project developed with Management Solutions and the Faculty
 of Mathematics at Universidad Complutense de Madrid. It compares how retrieval
-strategies affect a configurable language model answering multiple-choice questions about a
-technical research paper.
+strategies affect a configurable language model answering multiple-choice
+questions about a technical research paper.
+
+## Validated benchmark
+
+The corrected benchmark evaluates **70 questions × 5 methods = 350 observations**
+across no-retrieval baseline, BM25, dense, hybrid, and cross-encoder retrieval.
+The balanced local Qwen3 4B run completed **350/350 observations with zero
+failures**.
+
+| Method | Correct | Accuracy |
+|---|---:|---:|
+| baseline | 52/70 | 74.29% |
+| BM25 | 69/70 | 98.57% |
+| dense | 60/70 | 85.71% |
+| hybrid | 64/70 | 91.43% |
+| cross-encoder | 69/70 | 98.57% |
+
+The original answer positions were severely imbalanced (A/B/C/D = 0/5/64/1),
+making a constant-C strategy 91.43% accurate. The corrected dataset is balanced
+at 18/18/17/17 while preserving question and answer meaning. Experiments are
+reproducible and resumable, with pinned model revisions, manifests, CI, offline
+tests, and provenance checks. Results are limited to this single-paper dataset;
+they do not establish general RAG superiority.
 
 ## Compared methods
 
@@ -19,10 +41,8 @@ Answer correctness and retrieval evidence are measured separately. This avoids
 confusing answer-key agreement with lexical reference overlap. Neither metric
 alone establishes whether the model used the context. See [evaluation protocol](docs/evaluation.md).
 
-The corrected full benchmark completed 350/350 local Qwen observations without
-failures. BM25 and cross-encoder each reached 98.57% on this single-paper dataset;
-the [benchmark report](docs/qwen-balanced-benchmark.md) states the controls,
-provenance and limits needed to interpret that result responsibly.
+The [benchmark report](docs/qwen-balanced-benchmark.md) records the full results,
+controls, provenance, and interpretation limits.
 
 ## Repository layout
 
@@ -43,12 +63,14 @@ provenance and limits needed to interpret that result responsibly.
 │   └── evaluation.py      # Metrics and plots
 ├── tests/                 # Offline unit tests
 ├── main.py                # Command-line entry point
-└── Two-Stage-Retrieval LLM RAG.ipynb
+└── Two-Stage-Retrieval LLM RAG.ipynb  # Historical/exploratory analysis
 ```
 
 Generated vector data and experiment outputs are intentionally excluded from
-Git. A compact summary of the previously published final experiment is kept in
-`docs/final-results-summary.csv`.
+Git. The modular `src/` implementation and `main.py` CLI are canonical. The
+root-level notebook is retained as historical/exploratory analysis and does not
+define the current pipeline. A compact pre-correction result summary is kept in
+`docs/final-results-summary.csv` for provenance.
 
 ## Requirements
 

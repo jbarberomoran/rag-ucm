@@ -36,8 +36,8 @@ no preregistered confirmatory comparison or multiple-comparison correction.
 - Resume returned successfully without adding observations; both attempt and
   final CSV hashes were unchanged. Four plots were generated and accuracy was
   visually checked.
-- 93 offline unit tests passed, with 86.84% source coverage; real offline Chroma
-  integration, Ruff and diff checks passed.
+- Current release checks pass 93 offline unit tests with 87.03% source coverage;
+  real offline Chroma integration, Ruff and diff checks passed.
 - [GitHub Actions validation](https://github.com/jbarberomoran/rag-ucm/actions/runs/34780903228)
   passed using the Linux CPU dependency lock.
 

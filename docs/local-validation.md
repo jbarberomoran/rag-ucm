@@ -31,6 +31,6 @@ python main.py --name qwen-local-validated --questions 0 1 2 \
 If the directory already exists, choose another --name or use --resume with
 the same configuration. Model downloads and generated results stay outside Git.
 
-Automated checks: 79 offline unit tests (86.46% src coverage), one real Chroma
-storage integration test, and Ruff. Provider transport is mocked in unit tests;
-the above smoke test used the real local server and model.
+Current automated checks: 93 offline unit tests (87.03% source coverage), one
+real Chroma storage integration test, and Ruff. Provider transport is mocked in
+unit tests; the historical smoke test above used the real local server and model.

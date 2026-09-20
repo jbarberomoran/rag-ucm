@@ -1,3 +1,5 @@
+"""Result summaries and plots for completed experiment observations."""
+
 import os
 
 import matplotlib.pyplot as plt
@@ -5,247 +7,226 @@ import pandas as pd
 import seaborn as sns
 
 
-def evaluate_results(df : pd.DataFrame, ff  : str):
-    print("\n" + "="*30)
-    print("📊 ACCURACY ENTRE RESPUESTAS VÁLIDAS (véase summary.json para todos los intentos)")
-    print("="*30)
-    # Calcula el porcentaje de aciertos por método
+def evaluate_results(df: pd.DataFrame, ff: str):
+    """Print accuracy over valid observations for each retrieval method."""
+    print("\n" + "=" * 30)
+    print("ACCURACY OVER VALID RESPONSES (see summary.json for all attempts)")
+    print("=" * 30)
     print(df.groupby("method")["correct"].mean() * 100)
-    print(f"📁 Resultados finales (clean): {ff}")
+    print(f"Final results: {ff}")
 
-def load_data(dir_input : str):
-    """Carga los datos y asegura que las columnas tengan el tipo correcto."""
+
+def load_data(dir_input: str):
+    """Load valid observations and normalize the correctness column."""
     if not os.path.exists(dir_input):
-        print(f"❌ Error: No se encuentra el archivo {dir_input}")
-        print("   Ejecuta primero 'launcher.py' para generar datos.")
+        print(f"Results file not found: {dir_input}")
+        print("Run main.py to generate experiment data first.")
         return None
-    
+
     df = pd.read_csv(dir_input)
     if "error" in df:
         df = df[df["error"].fillna("") == ""].copy()
-    
-    # Aseguramos que 'correct' sea numérico (1/0) para calcular porcentajes
-    # En tu main lo guardas como booleano o int, esto lo estandariza
+
     if "correct" in df.columns:
         df["correct"] = df["correct"].astype(int)
-        
+
     return df
 
+
 def setup_plot_style():
-    """Configura el estilo visual de las gráficas."""
+    """Configure the shared plot style."""
     sns.set_theme(style="whitegrid")
-    plt.rcParams.update({'figure.autolayout': True})
+    plt.rcParams.update({"figure.autolayout": True})
+
 
 def clean_emojis(text):
-    """Elimina emojis para evitar warnings de fuentes en Windows."""
+    """Remove legacy status icons that can trigger font warnings."""
     if not isinstance(text, str):
         return text
-    # Eliminamos caracteres no ASCII (emojis suelen serlo) o limpiamos chars específicos
-    # Forma simple: Reemplazo directo de los que usas
-    text = text.replace("✅", "").replace("⚠️", "").replace("📉", "").replace("❌", "")
-    return text.strip()
+    return (
+        text.replace("✅", "")
+        .replace("⚠️", "")
+        .replace("📉", "")
+        .replace("❌", "")
+        .strip()
+    )
 
-def plot_accuracy(df, dir_output : str):
-    """
-    1. GRÁFICO DE PRECISIÓN (% de Aciertos)
-    Usa la columna 'correct'.
-    """
+
+def plot_accuracy(df, dir_output: str):
+    """Plot answer accuracy by retrieval method."""
     if "correct" not in df.columns:
-        print("⚠️ Columna 'correct' no encontrada. Saltando gráfico de precisión.")
+        print("Column 'correct' not found; skipping the accuracy plot.")
         return
 
     plt.figure(figsize=(10, 6))
-    
-    # Agrupar por método y calcular la media de aciertos
-    acc_df = df.groupby("method")["correct"].mean() * 100
-    acc_df = acc_df.reset_index()
-    
-    # Crear gráfico de barras
+    accuracy = (df.groupby("method")["correct"].mean() * 100).reset_index()
     barplot = sns.barplot(
-        x="method", 
-        y="correct", 
+        x="method",
+        y="correct",
         hue="method",
-        data=acc_df, 
+        data=accuracy,
         palette="viridis",
         edgecolor="black",
-        legend=False
+        legend=False,
     )
-    
-    # Añadir etiquetas de valor encima de las barras
-    for p in barplot.patches:
-        barplot.annotate(f'{p.get_height():.1f}%', 
-                         (p.get_x() + p.get_width() / 2., p.get_height()), 
-                         ha='center', va='center', 
-                         xytext=(0, 9), 
-                         textcoords='offset points',
-                         fontweight='bold')
 
-    plt.title("Precisión de Respuesta (Accuracy) por Método", fontsize=14, fontweight='bold')
-    plt.ylabel("% de Acierto")
-    plt.xlabel("Método de Recuperación")
-    plt.ylim(0, 115) # Margen superior para las etiquetas
-    
+    for patch in barplot.patches:
+        barplot.annotate(
+            f"{patch.get_height():.1f}%",
+            (patch.get_x() + patch.get_width() / 2, patch.get_height()),
+            ha="center",
+            va="center",
+            xytext=(0, 9),
+            textcoords="offset points",
+            fontweight="bold",
+        )
+
+    plt.title("Answer accuracy by method", fontsize=14, fontweight="bold")
+    plt.ylabel("Accuracy (%)")
+    plt.xlabel("Retrieval method")
+    plt.ylim(0, 115)
+
     save_path = os.path.join(dir_output, "1_accuracy.png")
     plt.savefig(save_path, dpi=300)
-    print("📊 Gráfico 1 guardado: Accuracy")
+    print("Saved plot 1: accuracy")
     plt.close()
 
-def plot_rag_quality(df, dir_output : str):
-    """
-    Gráfico 2: Calidad del RAG en PORCENTAJE (%)
-    """
+
+def plot_rag_quality(df, dir_output: str):
+    """Plot answer correctness against detected reference overlap."""
     if "status" not in df.columns:
         return
 
-    # 1. Limpiamos emojis de la columna status para evitar warnings de fuente
     df = df.copy()
     df["status_clean"] = df["status"].apply(clean_emojis)
-
     plt.figure(figsize=(12, 7))
-    
-    # 2. Calcular porcentajes
-    # Agrupamos por método y status, contamos, y dividimos por el total de cada método
-    counts = df.groupby(['method', 'status_clean']).size().reset_index(name='count')
-    totals = df.groupby('method').size().reset_index(name='total')
-    data_pct = pd.merge(counts, totals, on='method')
-    data_pct['percentage'] = (data_pct['count'] / data_pct['total']) * 100
 
-    # 3. Mapeo de colores (usando los nombres SIN emojis)
+    counts = df.groupby(["method", "status_clean"]).size().reset_index(name="count")
+    totals = df.groupby("method").size().reset_index(name="total")
+    percentages = pd.merge(counts, totals, on="method")
+    percentages["percentage"] = percentages["count"] / percentages["total"] * 100
+
     status_palette = {
         "Correct / reference overlap detected": "#2ecc71",
         "Correct / reference overlap not detected": "#f1c40f",
         "Incorrect / reference overlap detected": "#e67e22",
         "Incorrect / reference overlap not detected": "#e74c3c",
     }
-    
-    # Asegurar que la paleta cubra todo lo que hay en los datos
-    unique = data_pct["status_clean"].unique()
-    palette_final = {k: status_palette.get(k, "#95a5a6") for k in unique}
-
-    # 4. Graficar con porcentajes
+    palette = {
+        status: status_palette.get(status, "#95a5a6")
+        for status in percentages["status_clean"].unique()
+    }
     barplot = sns.barplot(
-        data=data_pct,
+        data=percentages,
         x="method",
         y="percentage",
         hue="status_clean",
-        palette=palette_final,
-        edgecolor="black"
+        palette=palette,
+        edgecolor="black",
     )
 
-    # Añadir etiquetas de % en las barras
-    for p in barplot.patches:
-        height = p.get_height()
-        if height > 0: # Solo etiquetar si la barra existe
-            barplot.annotate(f'{height:.1f}%',
-                             (p.get_x() + p.get_width() / 2., height),
-                             ha='center', va='bottom',
-                             fontsize=9, color='black', xytext=(0, 3),
-                             textcoords='offset points')
+    for patch in barplot.patches:
+        height = patch.get_height()
+        if height > 0:
+            barplot.annotate(
+                f"{height:.1f}%",
+                (patch.get_x() + patch.get_width() / 2, height),
+                ha="center",
+                va="bottom",
+                fontsize=9,
+                color="black",
+                xytext=(0, 3),
+                textcoords="offset points",
+            )
 
-    plt.title("Answer correctness and reference overlap", fontsize=14, fontweight='bold')
-    plt.ylabel("Porcentaje del Total (%)")
-    plt.xlabel("Método")
-    plt.legend(title="Diagnóstico", bbox_to_anchor=(1.01, 1), loc='upper left')
-    plt.ylim(0, 110) # Margen para etiquetas
-
-    plt.savefig(os.path.join(dir_output, "2_rag_quality_pct.png"), dpi=300, bbox_inches='tight')
-    print("📊 Gráfico 2 guardado: RAG Quality (%)")
+    plt.title("Answer correctness and reference overlap", fontsize=14, fontweight="bold")
+    plt.ylabel("Share of observations (%)")
+    plt.xlabel("Retrieval method")
+    plt.legend(title="Diagnostic", bbox_to_anchor=(1.01, 1), loc="upper left")
+    plt.ylim(0, 110)
+    plt.savefig(
+        os.path.join(dir_output, "2_rag_quality_pct.png"), dpi=300, bbox_inches="tight"
+    )
+    print("Saved plot 2: answer correctness and reference overlap")
     plt.close()
 
-def plot_latency(df, dir_output : str):
-    """
-    3. GRÁFICO DE LATENCIA (Boxplot)
-    Usa la columna 'response_time'.
-    """
+
+def plot_latency(df, dir_output: str):
+    """Plot end-to-end response-time distributions by method."""
     if "response_time" not in df.columns:
-        print("⚠️ Columna 'response_time' no encontrada. Saltando gráfico de latencia.")
+        print("Column 'response_time' not found; skipping the latency plot.")
         return
 
     plt.figure(figsize=(10, 6))
-    
     sns.boxplot(
-        data=df, 
-        x="method", 
-        y="response_time", 
+        data=df,
+        x="method",
+        y="response_time",
         hue="method",
         palette="pastel",
-        showfliers=True, # Mostrar outliers
-        legend=False
+        showfliers=True,
+        legend=False,
     )
-    
-    plt.title("Latencia del Sistema (Tiempo de Respuesta)", fontsize=14)
-    plt.ylabel("Segundos")
-    plt.xlabel("Método")
-    plt.grid(True, axis='y', linestyle='--', alpha=0.5)
-    
+
+    plt.title("End-to-end response time by method", fontsize=14)
+    plt.ylabel("Seconds")
+    plt.xlabel("Retrieval method")
+    plt.grid(True, axis="y", linestyle="--", alpha=0.5)
+
     save_path = os.path.join(dir_output, "3_latency.png")
     plt.savefig(save_path, dpi=300)
-    print("📊 Gráfico 3 guardado: Latency")
+    print("Saved plot 3: latency")
     plt.close()
 
-def plot_retrieval_score(df, dir_output : str):
-    """
-    4. GRÁFICO DE FIDELIDAD DE RECUPERACIÓN (Violin Plot)
-    Usa la columna 'retrieval_score'.
-    """
+
+def plot_retrieval_score(df, dir_output: str):
+    """Plot lexical reference-overlap scores for retrieval methods."""
     if "retrieval_score" not in df.columns:
-        print("⚠️ Columna 'retrieval_score' no encontrada. Saltando gráfico de fidelidad.")
+        print("Column 'retrieval_score' not found; skipping the overlap plot.")
         return
     df = df[df["method"] != "baseline"]
     if df.empty:
         return
 
     plt.figure(figsize=(10, 6))
-    
-    # Usamos Violinplot porque muestra la densidad de distribución mejor que el boxplot
     sns.violinplot(
         data=df,
         x="method",
         y="retrieval_score",
         hue="method",
         palette="Set3",
-        inner="quartile", # Muestra líneas de cuartiles dentro del violín
-        legend=False
+        inner="quartile",
+        legend=False,
     )
-    
+
     plt.title("Reference text overlap (not faithfulness)", fontsize=14)
     plt.ylabel("Longest matching span / reference length (0–1)")
-    plt.xlabel("Método")
-    plt.ylim(-0.1, 1.1) # Márgenes para ver bien los extremos
-    
+    plt.xlabel("Retrieval method")
+    plt.ylim(-0.1, 1.1)
+
     save_path = os.path.join(dir_output, "4_retrieval_fidelity.png")
     plt.savefig(save_path, dpi=300)
-    print("📊 Gráfico 4 guardado: Retrieval Fidelity")
+    print("Saved plot 4: reference overlap")
     plt.close()
 
-def generate_dashboard(dir_input, dir_output : str):
-    print(f"\n📈 Iniciando generación de gráficos desde: {dir_input}")
-    
-    # 1. Crear carpeta de plots si no existe
-    if not os.path.exists(dir_output):
-        print(f"📁 Creando directorio de salida: {dir_output}")
-        os.makedirs(dir_output)
-        
-    # 2. Cargar datos
-    df = load_data(dir_input)
-    
-    if df is not None:
-        setup_plot_style()
-        
-        # 3. Generar gráficas
-        try:
-            plot_accuracy(df, dir_output)
-            plot_rag_quality(df, dir_output)
-            plot_latency(df, dir_output)
-            plot_retrieval_score(df, dir_output)
-            print(f"\n✅ ¡Éxito! Gráficos generados en: {os.path.abspath(dir_output)}")
-        except Exception as e:
-            print(f"❌ Error generando gráficos: {e}")
-            import traceback
-            traceback.print_exc()
 
-if __name__ == "__main__":
-    generate_dashboard(
-        "results/persistent_results/resultados_definitivos/resultados_finales.csv",
-        "results/persistent_results/resultados_definitivos/plots",
-    )
+def generate_dashboard(dir_input, dir_output: str):
+    """Generate all plots for a completed experiment file."""
+    print(f"\nGenerating plots from: {dir_input}")
+    if not os.path.exists(dir_output):
+        print(f"Creating plot directory: {dir_output}")
+        os.makedirs(dir_output)
+
+    df = load_data(dir_input)
+    if df is None:
+        return
+
+    setup_plot_style()
+    try:
+        plot_accuracy(df, dir_output)
+        plot_rag_quality(df, dir_output)
+        plot_latency(df, dir_output)
+        plot_retrieval_score(df, dir_output)
+        print(f"\nPlots generated in: {os.path.abspath(dir_output)}")
+    except Exception as error:
+        print(f"Unable to generate plots: {error}")
